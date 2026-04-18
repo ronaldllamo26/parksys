@@ -44,7 +44,7 @@ ob_start();
         </div>
     <?php endif; ?>
 
-    <div style="display: grid; grid-template-columns: 260px 1fr; gap: 48px;">
+    <div class="settings-grid">
         <!-- Nav Tabs -->
         <div style="display: flex; flex-direction: column; gap: 6px;" id="settings-tabs">
             <button class="nav-item active" style="width:100%; text-align:left; border:none; background:transparent; cursor:pointer;" onclick="switchTab('branding', this)">

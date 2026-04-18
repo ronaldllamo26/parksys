@@ -27,53 +27,55 @@ ob_start();
 </div>
 
 <div class="card" style="padding: 0;">
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Timestamp</th>
-                <th>User / Identity</th>
-                <th>Action</th>
-                <th>Object / Table</th>
-                <th>IP Address</th>
-                <th>Event Metadata</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($logs as $l): ?>
-            <tr>
-                <td>
-                    <div style="font-size: 13px; font-weight: 500;"><?= date('M d, H:i:s', strtotime($l['created_at'])) ?></div>
-                </td>
-                <td>
-                    <?php if ($l['user_name']): ?>
-                        <div style="font-weight: 600; font-size: 13px;"><?= htmlspecialchars($l['user_name']) ?></div>
-                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;"><?= $l['user_role'] ?></div>
-                    <?php else: ?>
-                        <span style="color: var(--text-muted); font-style: italic; font-size: 13px;">System / Public</span>
-                    <?php endif; ?>
-                </td>
-                <td>
-                    <?php 
-                        $color = 'var(--text-muted)';
-                        if (strpos($l['action'], 'SUCCESS') !== false) $color = 'var(--success)';
-                        if (strpos($l['action'], 'FAILED') !== false) $color = 'var(--danger)';
-                        if (strpos($l['action'], 'CREATED') !== false) $color = 'var(--primary)';
-                    ?>
-                    <span style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: <?= $color ?>;">
-                        <?= $l['action'] ?>
-                    </span>
-                </td>
-                <td><span style="font-size: 13px;"><?= $l['table_name'] ?></span> <span style="font-size: 11px; color: var(--text-muted);">#<?= $l['record_id'] ?? 'N/A' ?></span></td>
-                <td><span class="mono" style="font-size: 11px;"><?= $l['ip_address'] ?></span></td>
-                <td>
-                    <div style="font-size: 11px; color: var(--text-muted); max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title='<?= htmlspecialchars($l['details']) ?>'>
-                        <?= htmlspecialchars($l['details']) ?>
-                    </div>
-                </td>
-            </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+    <div style="overflow-x: auto;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User / Identity</th>
+                    <th>Action</th>
+                    <th>Object / Table</th>
+                    <th>IP Address</th>
+                    <th>Event Metadata</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($logs as $l): ?>
+                <tr>
+                    <td>
+                        <div style="font-size: 13px; font-weight: 500;"><?= date('M d, H:i:s', strtotime($l['created_at'])) ?></div>
+                    </td>
+                    <td>
+                        <?php if ($l['user_name']): ?>
+                            <div style="font-weight: 600; font-size: 13px;"><?= htmlspecialchars($l['user_name']) ?></div>
+                            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;"><?= $l['user_role'] ?></div>
+                        <?php else: ?>
+                            <span style="color: var(--text-muted); font-style: italic; font-size: 13px;">System / Public</span>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <?php 
+                            $color = 'var(--text-muted)';
+                            if (strpos($l['action'], 'SUCCESS') !== false) $color = 'var(--success)';
+                            if (strpos($l['action'], 'FAILED') !== false) $color = 'var(--danger)';
+                            if (strpos($l['action'], 'CREATED') !== false) $color = 'var(--primary)';
+                        ?>
+                        <span style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: <?= $color ?>;">
+                            <?= $l['action'] ?>
+                        </span>
+                    </td>
+                    <td><span style="font-size: 13px;"><?= $l['table_name'] ?></span> <span style="font-size: 11px; color: var(--text-muted);">#<?= $l['record_id'] ?? 'N/A' ?></span></td>
+                    <td><span class="mono" style="font-size: 11px;"><?= $l['ip_address'] ?></span></td>
+                    <td>
+                        <div style="font-size: 11px; color: var(--text-muted); max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title='<?= htmlspecialchars($l['details']) ?>'>
+                            <?= htmlspecialchars($l['details']) ?>
+                        </div>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <?php

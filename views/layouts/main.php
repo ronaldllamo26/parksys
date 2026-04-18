@@ -5,52 +5,110 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="base-url" content="<?= BASE_URL ?>">
 <title><?= $pageTitle ?? 'Dashboard' ?> — ParkSys Pro</title>
-<link href="<?= BASE_URL ?>/assets/css/parksys.css" rel="stylesheet">
+<link href="<?= BASE_URL ?>/assets/css/parksys.css?v=<?= time() ?>" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    // ── Bulletproof Toggle (No-Check Mode) ──
+    // ── Smart Navigation Toggle (Final Validated Version) ──
     function toggleSidebar() {
         const body = document.body;
-        const sb = document.getElementById('sidebar');
+        const sb = document.querySelector('.sidebar');
         const desktopIcon = document.getElementById('toggle-icon');
         const mobileIcon = document.querySelector('.mobile-menu-btn i');
-        
-        // Toggle BOTH states (CSS will handle the rest)
-        body.classList.toggle('sidebar-open');
-        if (sb) sb.classList.toggle('collapsed');
+        const isMobile = window.innerWidth <= 768;
 
-        // Update Icons based on current state
-        if (mobileIcon) {
-            const isMobileOpen = body.classList.contains('sidebar-open');
-            mobileIcon.setAttribute('data-lucide', isMobileOpen ? 'x' : 'menu');
-        }
-        
-        if (sb && desktopIcon) {
+        if (!sb) return;
+
+        if (isMobile) {
+            // Mobile Logic: Slide-out menu
+            body.classList.toggle('sidebar-open');
+            sb.classList.remove('collapsed'); // Force labels to show on mobile
+            
+            const isOpen = body.classList.contains('sidebar-open');
+            if (isOpen) {
+                sb.style.setProperty('left', '0', 'important');
+                sb.style.setProperty('transform', 'none', 'important');
+                sb.style.setProperty('visibility', 'visible', 'important');
+                sb.style.setProperty('opacity', '1', 'important');
+            } else {
+                sb.style.removeProperty('left');
+                sb.style.removeProperty('transform');
+                sb.style.removeProperty('visibility');
+                sb.style.removeProperty('opacity');
+            }
+            if (mobileIcon) mobileIcon.setAttribute('data-lucide', isOpen ? 'x' : 'menu');
+        } else {
+            // Desktop Logic: Collapse/Expand
+            sb.classList.toggle('collapsed');
             const isCollapsed = sb.classList.contains('collapsed');
-            desktopIcon.setAttribute('data-lucide', isCollapsed ? 'chevron-right' : 'chevron-left');
+            if (desktopIcon) {
+                desktopIcon.setAttribute('data-lucide', isCollapsed ? 'chevron-right' : 'chevron-left');
+            }
+            // Ensure mobile state is reset
+            body.classList.remove('sidebar-open');
+            sb.style.removeProperty('left');
         }
-        
+
         if(typeof lucide !== 'undefined') lucide.createIcons();
     }
 
-    // Close sidebar on overlay click (mobile)
+    // Close sidebar on overlay click
     document.addEventListener('click', (e) => {
-        if (document.body.classList.contains('sidebar-open') && 
-            !e.target.closest('.sidebar') && 
-            !e.target.closest('.mobile-menu-btn')) {
-            toggleSidebar();
-        }
+        const overlay = document.querySelector('.sidebar-overlay');
+        if (e.target === overlay) toggleSidebar();
     });
 </script>
+<style>
+    /* Mobile Navigation System */
+    @media (max-width: 768px) {
+        .sidebar-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+            z-index: 9999; display: none;
+            animation: fadeIn 0.2s ease-out;
+        }
+        body.sidebar-open .sidebar-overlay {
+            display: block !important;
+        }
+        .sidebar-close {
+            display: flex !important;
+            align-items: center; justify-content: center;
+            width: 36px; height: 36px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px; color: #fff; cursor: pointer;
+        }
+        body.sidebar-open .sidebar {
+            transform: none !important;
+            left: 0 !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            display: flex !important;
+        }
+        body.sidebar-open .nav-label {
+            display: inline-block !important;
+            margin-left: 12px !important;
+            opacity: 1 !important;
+        }
+        body.sidebar-open .nav-item {
+            justify-content: flex-start !important;
+            padding: 12px 20px !important;
+        }
+    }
+</style>
 </head>
 <body>
+
+<div class="sidebar-overlay"></div>
 
 <!-- ── Sidebar ── -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-brand">
     <div class="brand-icon"><i data-lucide="parking-circle"></i></div>
-    <div class="brand-name">ParkSys Pro</div>
+    <span class="brand-name">ParkSys Pro</span>
+    <!-- Mobile Close Button -->
+    <div class="sidebar-close" onclick="toggleSidebar()" style="display: none; margin-left: auto;">
+      <i data-lucide="x"></i>
+    </div>
   </div>
 
   <nav class="nav-menu">
@@ -106,7 +164,7 @@
 <div class="main-wrap">
   <header class="topbar">
     <div class="topbar-left">
-      <button class="mobile-menu-btn" onclick="toggleSidebar()" style="display: none; background: none; border: none; cursor: pointer; color: var(--text-main); margin-right: 12px; padding: 8px; z-index: 10001;">
+      <button class="mobile-menu-btn" onclick="toggleSidebar()" title="Toggle Menu">
         <i data-lucide="menu"></i>
       </button>
       
@@ -138,6 +196,13 @@
       </button>
     </div>
   </header>
+
+  <div class="breadcrumb" style="padding: 32px 40px 0 40px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted);">
+    <i data-lucide="home" style="width:14px"></i>
+    <span>/</span>
+    <span style="color: var(--text-main); font-weight: 500;"><?= $pageTitle ?? 'Dashboard' ?></span>
+  </div>
+
   <script>
     // Theme & UI Logic
     const body = document.body;
@@ -159,12 +224,6 @@
         });
     }
   </script>
-
-  <div class="breadcrumb" style="padding: 32px 40px 0 40px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted);">
-    <i data-lucide="home" style="width:14px"></i>
-    <span>/</span>
-    <span style="color: var(--text-main); font-weight: 500;"><?= $pageTitle ?? 'Dashboard' ?></span>
-  </div>
 
   <main class="main-content">
     <?= $content ?? '' ?>
