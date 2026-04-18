@@ -10,7 +10,7 @@ requireRole(ROLE_ADMIN, ROLE_SUPERADMIN);
 $db = Database::getConnection();
 
 $transactions = $db->query("
-    SELECT t.*, s.plate_number, s.vehicle_type, sl.slot_code, z.name AS zone_name
+    SELECT t.*, s.plate_number, s.vehicle_type, s.reference_id, sl.slot_code, z.name AS zone_name
     FROM transactions t
     JOIN sessions s ON t.session_id = s.id
     JOIN slots sl ON s.slot_id = sl.id

@@ -8,6 +8,33 @@
 <link href="<?= BASE_URL ?>/assets/css/parksys.css" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // ── Unified Toggle Sidebar (Global Definition in Head) ──
+    function toggleSidebar() {
+        const body = document.body;
+        const sb = document.getElementById('sidebar');
+        const desktopIcon = document.getElementById('toggle-icon');
+        const mobileIcon = document.querySelector('.mobile-menu-btn i');
+        const isMobile = window.innerWidth <= 768;
+
+        if (isMobile) {
+            body.classList.toggle('sidebar-open');
+            if (mobileIcon) {
+                const isOpen = body.classList.contains('sidebar-open');
+                mobileIcon.setAttribute('data-lucide', isOpen ? 'x' : 'menu');
+            }
+        } else {
+            if (sb) {
+                sb.classList.toggle('collapsed');
+                if (desktopIcon) {
+                    const isCollapsed = sb.classList.contains('collapsed');
+                    desktopIcon.setAttribute('data-lucide', isCollapsed ? 'chevron-right' : 'chevron-left');
+                }
+            }
+        }
+        if(typeof lucide !== 'undefined') lucide.createIcons();
+    }
+</script>
 </head>
 <body>
 
@@ -75,7 +102,7 @@
         <i data-lucide="menu"></i>
       </button>
       
-      <button class="sidebar-toggle desktop-only" onclick="toggleSidebar()">
+      <button class="sidebar-toggle desktop-only" onclick="toggleSidebar()" title="Toggle Sidebar">
         <i data-lucide="chevron-left" id="toggle-icon"></i>
       </button>
       
@@ -92,7 +119,7 @@
       </div>
       <div class="topbar-time" id="topbar-clock"></div>
       
-      <div style="width: 1px; height: 24px; background: var(--border);"></div>
+      <div style="width: 1px; height: 24px; background: var(--border); margin: 0 8px;"></div>
       
       <button class="sidebar-toggle" id="dark-mode-toggle" title="Toggle Theme">
         <i data-lucide="moon" style="width:18px" id="theme-icon"></i>
@@ -103,24 +130,8 @@
       </button>
     </div>
   </header>
-
   <script>
-    // ── Global Toggle Sidebar (Isolate to avoid JS crashes) ──
-    function toggleSidebar() {
-        const body = document.body;
-        const icon = document.querySelector('.mobile-menu-btn i');
-        body.classList.toggle('sidebar-open');
-        if (body.classList.contains('sidebar-open')) {
-            if(icon) icon.setAttribute('data-lucide', 'x');
-        } else {
-            if(icon) icon.setAttribute('data-lucide', 'menu');
-        }
-        if(typeof lucide !== 'undefined') lucide.createIcons();
-    }
-  </script>
-
-  <script>
-    // Theme & UI Logic (With Null Checks)
+    // Theme & UI Logic
     const body = document.body;
     const themeToggle = document.getElementById('dark-mode-toggle');
     const themeIcon = document.getElementById('theme-icon');
@@ -166,19 +177,6 @@
   if(el) el.textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   setTimeout(tick, 1000);
 })();
-
-function toggleSidebar(){
-  const sb = document.getElementById('sidebar');
-  const icon = document.getElementById('toggle-icon');
-  sb.classList.toggle('collapsed');
-  
-  if(sb.classList.contains('collapsed')) {
-    icon.setAttribute('data-lucide', 'chevron-right');
-  } else {
-    icon.setAttribute('data-lucide', 'chevron-left');
-  }
-  lucide.createIcons();
-}
 </script>
 </body>
 </html>
