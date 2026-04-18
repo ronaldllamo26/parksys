@@ -71,7 +71,11 @@
 <div class="main-wrap">
   <header class="topbar">
     <div class="topbar-left">
-      <button class="sidebar-toggle" onclick="toggleSidebar()">
+      <button class="mobile-menu-btn" onclick="toggleSidebar()" style="display: none; background: none; border: none; cursor: pointer; color: var(--text-main); margin-right: 12px;">
+        <i data-lucide="menu"></i>
+      </button>
+      
+      <button class="sidebar-toggle desktop-only" onclick="toggleSidebar()">
         <i data-lucide="chevron-left" id="toggle-icon"></i>
       </button>
       
@@ -118,6 +122,11 @@
       themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
       lucide.createIcons();
     });
+
+    // Mobile Sidebar Toggle
+    function toggleSidebar() {
+        document.body.classList.toggle('sidebar-open');
+    }
   </script>
 
   <div style="padding: 32px 40px 0 40px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted);">

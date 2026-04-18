@@ -283,3 +283,55 @@ body.dark .nav-item:hover { background-color: #334155; }
 body.dark .sidebar-footer { border-top-color: #334155; }
 body.dark .sidebar-brand { border-bottom-color: #334155; }
 body.dark .brand-name { color: #fff; }
+
+/* ── MOBILE RESPONSIVENESS ── */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    z-index: 1000;
+    transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 20px 0 50px rgba(0,0,0,0.1);
+  }
+  
+  body.sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+
+  .main-wrap {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .topbar {
+    padding: 0 16px;
+  }
+
+  .topbar-search {
+    display: none; /* Hide search on mobile to save space */
+  }
+
+  .topbar-left .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+
+  .sidebar-toggle #toggle-icon {
+    transform: rotate(180deg);
+  }
+
+  body.sidebar-open .sidebar-toggle #toggle-icon {
+    transform: rotate(0deg);
+  }
+
+  .stats-grid, .grid-3, .grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  
+  .content-body {
+    padding: 16px !important;
+  }
+}
