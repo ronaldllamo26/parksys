@@ -105,37 +105,39 @@
   </header>
 
   <script>
-    // Theme Logic
+    // ── Global Toggle Sidebar (Isolate to avoid JS crashes) ──
+    function toggleSidebar() {
+        const body = document.body;
+        const icon = document.querySelector('.mobile-menu-btn i');
+        body.classList.toggle('sidebar-open');
+        if (body.classList.contains('sidebar-open')) {
+            if(icon) icon.setAttribute('data-lucide', 'x');
+        } else {
+            if(icon) icon.setAttribute('data-lucide', 'menu');
+        }
+        if(typeof lucide !== 'undefined') lucide.createIcons();
+    }
+  </script>
+
+  <script>
+    // Theme & UI Logic (With Null Checks)
     const body = document.body;
     const themeToggle = document.getElementById('dark-mode-toggle');
     const themeIcon = document.getElementById('theme-icon');
 
     if (localStorage.getItem('theme') === 'dark') {
       body.classList.add('dark');
-      themeIcon.setAttribute('data-lucide', 'sun');
+      if(themeIcon) themeIcon.setAttribute('data-lucide', 'sun');
     }
 
-    themeToggle.addEventListener('click', () => {
-      body.classList.toggle('dark');
-      const isDark = body.classList.contains('dark');
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-      themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
-      lucide.createIcons();
-    });
-
-    // Mobile Sidebar Toggle
-    function toggleSidebar() {
-        const body = document.body;
-        const icon = document.querySelector('.mobile-menu-btn i');
-        
-        body.classList.toggle('sidebar-open');
-        
-        if (body.classList.contains('sidebar-open')) {
-            if(icon) icon.setAttribute('data-lucide', 'x');
-        } else {
-            if(icon) icon.setAttribute('data-lucide', 'menu');
-        }
-        lucide.createIcons();
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+          body.classList.toggle('dark');
+          const isDark = body.classList.contains('dark');
+          localStorage.setItem('theme', isDark ? 'dark' : 'light');
+          if(themeIcon) themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+          if(typeof lucide !== 'undefined') lucide.createIcons();
+        });
     }
   </script>
 
