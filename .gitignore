@@ -1,0 +1,6 @@
+# ParkSys Pro GitIgnore
+/scratch/
+/temp/
+.DS_Store
+*.log
+config/database.php
