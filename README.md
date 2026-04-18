@@ -54,14 +54,5 @@
 
 ---
 
-## 🔐 Default Credentials (Test Accounts)
-
-| Role | Email | Password |
-| :--- | :--- | :--- |
-| **Superadmin** | `admin@parksys.com` | `admin123` |
-| **Staff/Admin** | `staff@parksys.com` | `staff123` |
-
----
-
 ## 📜 License
 &copy; 2026 Smart Mobility Solutions. Developed for Enterprise-level Parking Operations.
