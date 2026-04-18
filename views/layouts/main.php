@@ -125,11 +125,21 @@
 
     // Mobile Sidebar Toggle
     function toggleSidebar() {
-        document.body.classList.toggle('sidebar-open');
+        const body = document.body;
+        const icon = document.querySelector('.mobile-menu-btn i');
+        
+        body.classList.toggle('sidebar-open');
+        
+        if (body.classList.contains('sidebar-open')) {
+            if(icon) icon.setAttribute('data-lucide', 'x');
+        } else {
+            if(icon) icon.setAttribute('data-lucide', 'menu');
+        }
+        lucide.createIcons();
     }
   </script>
 
-  <div style="padding: 32px 40px 0 40px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted);">
+  <div class="breadcrumb" style="padding: 32px 40px 0 40px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted);">
     <i data-lucide="home" style="width:14px"></i>
     <span>/</span>
     <span style="color: var(--text-main); font-weight: 500;"><?= $pageTitle ?? 'Dashboard' ?></span>
@@ -140,16 +150,15 @@
   </main>
   
   <footer style="margin-top: auto; padding: 24px 40px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between;">
-    <span>ParkSys Pro Enterprise v<?= APP_VERSION ?></span>
+    <span>ParkSys Pro Enterprise v1.0.2</span>
     <span>&copy; <?= date('Y') ?> All Rights Reserved.</span>
   </footer>
 </div>
 
 <!-- Scripts -->
 <script src="<?= BASE_URL ?>/assets/js/parksys.js"></script>
+<script>lucide.createIcons();</script>
 <script>
-lucide.createIcons();
-
 (function tick(){
   const el = document.getElementById('topbar-clock');
   if(el) el.textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
