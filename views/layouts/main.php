@@ -8,32 +8,40 @@
 <link href="<?= BASE_URL ?>/assets/css/parksys.css" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    // ── Unified Toggle Sidebar (Global Definition in Head) ──
+  <script>
+    // ── Bulletproof Toggle (No-Check Mode) ──
     function toggleSidebar() {
         const body = document.body;
         const sb = document.getElementById('sidebar');
         const desktopIcon = document.getElementById('toggle-icon');
         const mobileIcon = document.querySelector('.mobile-menu-btn i');
-        const isMobile = window.innerWidth <= 768;
+        
+        // Toggle BOTH states (CSS will handle the rest)
+        body.classList.toggle('sidebar-open');
+        if (sb) sb.classList.toggle('collapsed');
 
-        if (isMobile) {
-            body.classList.toggle('sidebar-open');
-            if (mobileIcon) {
-                const isOpen = body.classList.contains('sidebar-open');
-                mobileIcon.setAttribute('data-lucide', isOpen ? 'x' : 'menu');
-            }
-        } else {
-            if (sb) {
-                sb.classList.toggle('collapsed');
-                if (desktopIcon) {
-                    const isCollapsed = sb.classList.contains('collapsed');
-                    desktopIcon.setAttribute('data-lucide', isCollapsed ? 'chevron-right' : 'chevron-left');
-                }
-            }
+        // Update Icons based on current state
+        if (mobileIcon) {
+            const isMobileOpen = body.classList.contains('sidebar-open');
+            mobileIcon.setAttribute('data-lucide', isMobileOpen ? 'x' : 'menu');
         }
+        
+        if (sb && desktopIcon) {
+            const isCollapsed = sb.classList.contains('collapsed');
+            desktopIcon.setAttribute('data-lucide', isCollapsed ? 'chevron-right' : 'chevron-left');
+        }
+        
         if(typeof lucide !== 'undefined') lucide.createIcons();
     }
+
+    // Close sidebar on overlay click (mobile)
+    document.addEventListener('click', (e) => {
+        if (document.body.classList.contains('sidebar-open') && 
+            !e.target.closest('.sidebar') && 
+            !e.target.closest('.mobile-menu-btn')) {
+            toggleSidebar();
+        }
+    });
 </script>
 </head>
 <body>
@@ -98,7 +106,7 @@
 <div class="main-wrap">
   <header class="topbar">
     <div class="topbar-left">
-      <button class="mobile-menu-btn" onclick="toggleSidebar()" style="display: none; background: none; border: none; cursor: pointer; color: var(--text-main); margin-right: 12px;">
+      <button class="mobile-menu-btn" onclick="toggleSidebar()" style="display: none; background: none; border: none; cursor: pointer; color: var(--text-main); margin-right: 12px; padding: 8px; z-index: 10001;">
         <i data-lucide="menu"></i>
       </button>
       
