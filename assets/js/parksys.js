@@ -3,6 +3,23 @@
 const ParkSys = {
 
     BASE: document.querySelector('meta[name="base-url"]')?.content ?? '',
+    CSRF: document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+
+    /**
+     * Secure Fetch Wrapper
+     * Automatically adds CSRF token to headers for non-GET requests.
+     */
+    async secureFetch(url, options = {}) {
+        if (!options.method) options.method = 'GET';
+        
+        if (options.method.toUpperCase() !== 'GET') {
+            if (!options.headers) options.headers = {};
+            options.headers['X-CSRF-TOKEN'] = ParkSys.CSRF;
+        }
+
+        const fullUrl = url.startsWith('http') ? url : ParkSys.BASE + url;
+        return fetch(fullUrl, options);
+    },
 
     // ── ENTRY ────────────────────────────────────────────────
     processEntry(slotId, plateNumber, vehicleType, callback) {
@@ -11,7 +28,7 @@ const ParkSys = {
         data.append('plate_number', plateNumber.toUpperCase().trim());
         data.append('vehicle_type', vehicleType);
 
-        fetch(ParkSys.BASE + '/api/process_entry.php', { method: 'POST', body: data })
+        ParkSys.secureFetch('/api/process_entry.php', { method: 'POST', body: data })
             .then(r => r.json())
             .then(res => {
                 ParkSys.toast(res.message, res.success ? 'success' : 'danger');
@@ -26,7 +43,7 @@ const ParkSys = {
         data.append('identifier', identifier);
         data.append('payment_method', paymentMethod);
 
-        fetch(ParkSys.BASE + '/api/process_exit.php', { method: 'POST', body: data })
+        ParkSys.secureFetch('/api/process_exit.php', { method: 'POST', body: data })
             .then(r => r.json())
             .then(res => {
                 ParkSys.toast(res.message, res.success ? 'success' : 'danger');
@@ -37,7 +54,7 @@ const ParkSys = {
 
     // ── REFRESH SLOTS (live AJAX update) ─────────────────────
     refreshSlots() {
-        fetch(ParkSys.BASE + '/api/get_slots.php')
+        ParkSys.secureFetch('/api/get_slots.php')
             .then(r => r.json())
             .then(({ slots }) => {
                 if (!slots) return;

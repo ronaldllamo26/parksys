@@ -8,11 +8,12 @@
 
 - **🚀 Live Dashboard**: Real-time monitoring of slot availability, active sessions, and system integrity.
 - **🛡️ Secure Authentication**: Role-based access control (RBAC) for Staff, Admin, and Superadmin tiers.
+- **🔐 Iron Dome Security Suite**: Integrated CSRF protection, Brute-force account lockout, and secure HTTP headers.
 - **💎 VIP & Loyalty System**: Dedicated VIP slot management and loyalty points integration for frequent parkers.
 - **📊 Advanced Analytics**: Comprehensive revenue tracking, peak-hour analysis, and occupancy trends.
-- **🧾 Automated Billing**: Smart calculation of fees based on vehicle type, duration, and VIP status with automated receipt generation.
-- **📜 Forensic Audit Logs**: High-detail system logs to track every administrative action and security event.
-- **✨ Professional UI**: A clean, modern, and responsive interface designed for high-pressure operational environments.
+- **🧾 Automated Billing**: Backend-validated billing logic to prevent price manipulation and ensure financial integrity.
+- **📜 Forensic Audit Logs**: High-detail system logs tracking all administrative actions and security events.
+- **✨ Professional UI**: Modern, responsive interface designed for high-pressure operational environments.
 
 ---
 
@@ -21,7 +22,7 @@
 - **Backend**: PHP 8.x (Standard Apache/XAMPP)
 - **Database**: MySQL (Optimized Relational Schema)
 - **Frontend**: Vanilla CSS3, Modern JavaScript (ES6+), Lucide Icons
-- **Design Principles**: Professional Minimalist, Enterprise Responsive Layout
+- **Security**: PDO Prepared Statements, Bcrypt Hashing, CSRF Tokens
 
 ---
 
@@ -34,16 +35,15 @@
 
 2. **Configure Database**
    - Create a database named `parksys` in your MySQL server.
-   - Import the database schema from the `/sql` or `/api/export_db.php` if available.
+   - Import the database schema from the SQL file provided in the repository.
    - Update `config/database.php` with your local credentials.
 
 3. **Deploy to Local Server**
    - Move the project folder to your `htdocs` or equivalent web root.
    - Access the system via `http://localhost/parksys`.
 
-4. **Default Credentials**
-   - **Admin**: `admin@parksys.com` / `admin123`
-   - **Staff**: `staff@parksys.com` / `staff123`
+4. **Authentication**
+   - Use the pre-configured administrator credentials provided during the initial setup. For security reasons, default credentials are not listed in this documentation.
 
 ---
 

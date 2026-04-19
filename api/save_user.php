@@ -7,6 +7,7 @@ require_once __DIR__ . '/../includes/helpers.php';
 
 header('Content-Type: application/json');
 requireRole(ROLE_SUPERADMIN);
+requireCsrf();
 
 $db = Database::getConnection();
 

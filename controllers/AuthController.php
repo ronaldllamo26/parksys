@@ -26,7 +26,7 @@ class AuthController {
         }
 
         $stmt = $this->db->prepare("
-            SELECT id, name, email, password, role, is_active
+            SELECT id, name, email, password, role, is_active, login_attempts, lockout_until
             FROM users
             WHERE email = :email
             LIMIT 1
@@ -38,14 +38,35 @@ class AuthController {
             return ['success' => false, 'message' => 'Invalid credentials.'];
         }
 
+        // Check for Account Lockout
+        if ($user['lockout_until'] && new DateTime($user['lockout_until']) > new DateTime()) {
+            $diff = (new DateTime($user['lockout_until']))->getTimestamp() - (new DateTime())->getTimestamp();
+            $mins = ceil($diff / 60);
+            return ['success' => false, 'message' => "Account locked. Please try again in {$mins} minutes."];
+        }
+
         if (!$user['is_active']) {
             return ['success' => false, 'message' => 'Your account has been deactivated.'];
         }
 
         if (!password_verify($password, $user['password'])) {
-            auditLog($this->db, null, 'LOGIN_FAILED', 'users', null, ['email' => $email]);
+            // Increment failed attempts
+            $attempts = $user['login_attempts'] + 1;
+            $lockout = null;
+            if ($attempts >= 5) {
+                $lockout = (new DateTime())->add(new DateInterval('PT15M'))->format('Y-m-d H:i:s');
+            }
+            
+            $upd = $this->db->prepare("UPDATE users SET login_attempts = :a, lockout_until = :l WHERE id = :id");
+            $upd->execute([':a' => $attempts, ':l' => $lockout, ':id' => $user['id']]);
+
+            auditLog($this->db, null, 'LOGIN_FAILED', 'users', $user['id'], ['email' => $email, 'attempts' => $attempts]);
             return ['success' => false, 'message' => 'Invalid credentials.'];
         }
+
+        // Reset attempts on success
+        $reset = $this->db->prepare("UPDATE users SET login_attempts = 0, lockout_until = NULL WHERE id = :id");
+        $reset->execute([':id' => $user['id']]);
 
         // ✅ Regenerate session ID to prevent fixation attacks
         session_regenerate_id(true);
@@ -82,7 +103,7 @@ class AuthController {
             );
         }
         session_destroy();
-        header('Location: ' . BASE_URL . '/views/auth/login.php');
+        header('Location: ' . BASE_URL . '/index.php');
         exit;
     }
 

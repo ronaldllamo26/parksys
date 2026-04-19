@@ -1,12 +1,16 @@
 <?php
 require_once __DIR__ . '/../../config/constants.php';
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../includes/security_headers.php';
+require_once __DIR__ . '/../../includes/helpers.php';
+$csrfToken = generateCsrfToken();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="csrf-token" content="<?= $csrfToken ?>">
 <title>Login — ParkSys Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
@@ -140,6 +144,12 @@ body {
     <div class="brand-name">ParkSys Pro</div>
   </div>
 
+  <div style="text-align:center; margin-bottom:20px;">
+    <a href="<?= BASE_URL ?>/index.php" style="color:var(--text-muted); text-decoration:none; font-size:12px; display:inline-flex; align-items:center; gap:4px; font-weight:600;">
+      <i data-lucide="arrow-left" style="width:14px"></i> Back to Home
+    </a>
+  </div>
+
   <div class="header">
     <h1>Sign in</h1>
     <p>Please enter your credentials</p>
@@ -195,7 +205,10 @@ function startLogin() {
   fetch('<?= BASE_URL ?>/api/auth_login.php', { 
     method: 'POST', 
     body: fd,
-    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    headers: { 
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+    }
   })
     .then(r => r.json())
     .then(res => {

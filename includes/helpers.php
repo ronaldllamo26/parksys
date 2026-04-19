@@ -61,6 +61,30 @@ function jsonResponse(array $data, int $code = 200): never {
 }
 
 /**
+ * CSRF Protection Functions
+ */
+function generateCsrfToken(): string {
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+function validateCsrfToken(?string $token): bool {
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    if (empty($_SESSION['csrf_token']) || empty($token)) return false;
+    return hash_equals($_SESSION['csrf_token'], $token);
+}
+
+function requireCsrf(): void {
+    $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? null;
+    if (!validateCsrfToken($token)) {
+        jsonResponse(['success' => false, 'message' => 'Security Error: Invalid CSRF Token'], 403);
+    }
+}
+
+/**
  * Fetch a system setting from the database.
  */
 function getSetting(PDO $db, string $key, string $default = ''): string {

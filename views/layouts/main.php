@@ -1,9 +1,15 @@
+<?php 
+require_once __DIR__ . '/../../includes/security_headers.php'; 
+require_once __DIR__ . '/../../includes/helpers.php';
+$csrfToken = generateCsrfToken();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="base-url" content="<?= BASE_URL ?>">
+<meta name="csrf-token" content="<?= $csrfToken ?>">
 <title><?= $pageTitle ?? 'Dashboard' ?> — ParkSys Pro</title>
 <link href="<?= BASE_URL ?>/assets/css/parksys.css?v=<?= time() ?>" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>

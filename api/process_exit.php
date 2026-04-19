@@ -9,6 +9,7 @@ require_once __DIR__ . '/../controllers/SessionController.php';
 
 header('Content-Type: application/json');
 requireRole(ROLE_ADMIN, ROLE_SUPERADMIN);
+requireCsrf();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonResponse(['success' => false, 'message' => 'Method Not Allowed'], 405);
