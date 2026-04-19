@@ -6,9 +6,11 @@
 
 ### 🎥 System Demonstration
 
-https://github.com/ronaldllamo26/parksys/raw/main/assets/parksys_demo.mp4
-
 <div align="center">
+  <video src="https://raw.githubusercontent.com/ronaldllamo26/parksys/main/assets/parksys_demo.mp4" width="100%" controls>
+    Your browser does not support the video tag.
+  </video>
+</div>
   <p align="center">
     <img src="https://img.shields.io/badge/PHP-8.2-777BB4?style=for-the-badge&logo=php&logoColor=white" />
     <img src="https://img.shields.io/badge/MySQL-MariaDB-003545?style=for-the-badge&logo=mariadb&logoColor=white" />
