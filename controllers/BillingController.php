@@ -23,15 +23,17 @@ class BillingController {
      *
      * @throws Exception if no rate config found
      */
-    public function calculateFee(string $vehicleType, DateTime $entry, DateTime $exit): array {
+    public function calculateFee(string $vehicleType, DateTime $entry, DateTime $exit, bool $isDiscounted = false, string $slotType = 'standard'): array {
         // Fetch active rate
+        $targetType = ($slotType === 'vip') ? 'vip' : $vehicleType;
+
         $stmt = $this->db->prepare("
             SELECT * FROM rates
             WHERE vehicle_type = :type AND is_current = 1
             ORDER BY effective_from DESC
             LIMIT 1
         ");
-        $stmt->execute([':type' => $vehicleType]);
+        $stmt->execute([':type' => $targetType]);
         $rate = $stmt->fetch();
 
         if (!$rate) {
@@ -50,6 +52,7 @@ class BillingController {
                 'duration_mins' => $mins,
                 'base_fee'      => 0.00,
                 'excess_fee'    => 0.00,
+                'discount'      => 0.00,
                 'total_fee'     => 0.00,
                 'rate_id'       => (int) $rate['id'],
                 'note'          => "Within {$graceMins}-min grace period — no charge",
@@ -70,16 +73,25 @@ class BillingController {
         $subtotal = $baseFee + $totalExcessFee;
 
         // ── FLAT DAY RATE CAP ─────────────────────────────────
-        $note = 'Standard rate';
+        $note = ($targetType === 'vip') ? 'VIP Premium Rate' : 'Standard rate';
         if ($flatDayRate !== null && $subtotal >= $flatDayRate) {
             $subtotal = $flatDayRate;
             $note     = 'Flat 24-hr rate applied (cheaper than hourly)';
+        }
+
+        // ── DISCOUNT LOGIC (PWD/Senior 20%) ───────────────────
+        $discountAmount = 0.00;
+        if ($isDiscounted) {
+            $discountAmount = round($subtotal * 0.20, 2);
+            $subtotal      -= $discountAmount;
+            $note          .= " | 20% PWD/Senior Discount Applied (-₱$discountAmount)";
         }
 
         return [
             'duration_mins' => $mins,
             'base_fee'      => round($baseFee, 2),
             'excess_fee'    => round($totalExcessFee, 2),
+            'discount'      => $discountAmount,
             'total_fee'     => round($subtotal, 2),
             'rate_id'       => (int) $rate['id'],
             'note'          => $note,
@@ -94,19 +106,20 @@ class BillingController {
 
         $stmt = $this->db->prepare("
             INSERT INTO transactions
-                (session_id, rate_id, base_fee, excess_fee, total_fee, payment_method, receipt_no, handled_by)
+                (session_id, rate_id, base_fee, excess_fee, discount, total_fee, payment_method, receipt_no, handled_by)
             VALUES
-                (:sid, :rid, :base, :excess, :total, :method, :receipt, :hby)
+                (:sid, :rid, :base, :excess, :discount, :total, :method, :receipt, :hby)
         ");
         $stmt->execute([
-            ':sid'     => $sessionId,
-            ':rid'     => $fee['rate_id'],
-            ':base'    => $fee['base_fee'],
-            ':excess'  => $fee['excess_fee'],
-            ':total'   => $fee['total_fee'],
-            ':method'  => $paymentMethod,
-            ':receipt' => $receiptNo,
-            ':hby'     => $handledBy,
+            ':sid'      => $sessionId,
+            ':rid'      => $fee['rate_id'],
+            ':base'     => $fee['base_fee'],
+            ':excess'   => $fee['excess_fee'],
+            ':discount' => $fee['discount'] ?? 0.00,
+            ':total'    => $fee['total_fee'],
+            ':method'   => $paymentMethod,
+            ':receipt'  => $receiptNo,
+            ':hby'      => $handledBy,
         ]);
 
         return $receiptNo;
@@ -116,10 +129,10 @@ class BillingController {
      * Get estimated bill for a CURRENTLY active session (no exit yet).
      * Used by customer "Check My Bill" portal.
      */
-    public function estimateBill(string $vehicleType, string $entryTimeStr): array {
+    public function estimateBill(string $vehicleType, string $entryTimeStr, string $slotType = 'standard'): array {
         $entry = new DateTime($entryTimeStr);
         $now   = new DateTime();
-        return $this->calculateFee($vehicleType, $entry, $now);
+        return $this->calculateFee($vehicleType, $entry, $now, false, $slotType);
     }
 
     /**

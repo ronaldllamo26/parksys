@@ -13,10 +13,17 @@ $plate = $_GET['plate'] ?? '';
 $session = null;
 if ($plate) {
     $stmt = $db->prepare("
-        SELECT sess.*, s.slot_code, r.first_hour_fee, r.excess_hour_fee, r.grace_minutes
+        SELECT 
+            sess.*, 
+            s.slot_code, 
+            s.slot_type,
+            r.id as rate_id,
+            r.first_hour_fee, 
+            r.excess_hour_fee, 
+            r.grace_minutes
         FROM sessions sess
         JOIN slots s ON sess.slot_id = s.id
-        JOIN rates r ON sess.vehicle_type = r.vehicle_type AND r.is_current = 1
+        JOIN rates r ON r.is_current = 1 AND r.vehicle_type = (CASE WHEN s.slot_type = 'vip' THEN 'vip' ELSE sess.vehicle_type END)
         WHERE sess.plate_number = :plate AND sess.status = 'active'
         LIMIT 1
     ");
@@ -37,15 +44,40 @@ ob_start();
     <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 32px; align-items: start;">
         <!-- Left: Search/Identity -->
         <div class="card">
-            <form method="GET" action="">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <label class="label" style="margin:0;">Locate Vehicle</label>
+                <button type="button" onclick="simulateExitScan()" style="font-size: 11px; background: var(--primary-light); color: var(--primary); border: 1px solid var(--primary); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: 700;">
+                    <i data-lucide="scan" style="width:12px; margin-right:4px;"></i> AI Camera Scan
+                </button>
+            </div>
+            <form method="GET" action="" id="search-form">
                 <div class="form-group">
-                    <label class="label">Locate Vehicle Plate</label>
                     <div style="display: flex; gap: 8px;">
-                        <input type="text" name="plate" class="input mono" value="<?= htmlspecialchars($plate) ?>" placeholder="ABC-1234" style="text-transform: uppercase;">
+                        <input type="text" name="plate" id="exit-plate" class="input mono" value="<?= htmlspecialchars($plate) ?>" placeholder="ABC-1234" style="text-transform: uppercase;">
                         <button type="submit" class="btn btn-primary" style="padding: 10px;"><i data-lucide="search"></i></button>
                     </div>
                 </div>
             </form>
+
+            <script>
+            function simulateExitScan() {
+                // Fetch active plates from API or use the Live Activity data if available
+                // For simulation, we'll fetch from a list of active sessions
+                fetch('<?= BASE_URL ?>/api/get_slots.php')
+                    .then(r => r.json())
+                    .then(res => {
+                        const occupied = res.slots.filter(s => s.status === 'occupied');
+                        if (occupied.length > 0) {
+                            const randomSlot = occupied[Math.floor(Math.random() * occupied.length)];
+                            const plate = randomSlot.plate_number;
+                            document.getElementById('exit-plate').value = plate;
+                            document.getElementById('search-form').submit();
+                        } else {
+                            alert('No active vehicles in the lot to scan.');
+                        }
+                    });
+            }
+            </script>
 
             <?php if ($session): ?>
                 <div style="margin-top: 24px; padding: 20px; background: var(--surface); border: 1px dashed var(--border); border-radius: 8px;">
@@ -93,20 +125,31 @@ ob_start();
 
                     <form id="exit-form">
                         <input type="hidden" id="sess_id" value="<?= $session['id'] ?>">
+                        <div style="background: var(--surface); padding: 16px; border-radius: 8px; margin-bottom: 24px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 13px; color: var(--text-main);">PWD / Senior Citizen</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">Apply standard 20% discount</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="discount-toggle" onchange="updateLiveBill()">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+
                         <div class="form-group">
                             <label class="label">Payment Method</label>
-                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-                                <label style="cursor:pointer; border:1px solid var(--border); padding:10px; border-radius:6px; text-align:center;">
-                                    <input type="radio" name="payment" value="cash" checked> <br> <span style="font-size:12px; font-weight:600;">Cash</span>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                                <label style="cursor:pointer; border:1px solid var(--border); padding:10px; border-radius:6px; display:flex; align-items:center; gap:10px;">
+                                    <input type="radio" name="payment" value="cash" checked> <span style="font-size:12px; font-weight:600;">Cash</span>
                                 </label>
-                                <label style="cursor:pointer; border:1px solid var(--border); padding:10px; border-radius:6px; text-align:center;">
-                                    <input type="radio" name="payment" value="gcash"> <br> <span style="font-size:12px; font-weight:600;">GCash</span>
+                                <label style="cursor:pointer; border:1px solid var(--border); padding:10px; border-radius:6px; display:flex; align-items:center; gap:10px;">
+                                    <input type="radio" name="payment" value="gcash"> <span style="font-size:12px; font-weight:600;">GCash</span>
                                 </label>
-                                <label style="cursor:pointer; border:1px solid var(--border); padding:10px; border-radius:6px; text-align:center;">
-                                    <input type="radio" name="payment" value="maya"> <br> <span style="font-size:12px; font-weight:600;">Maya</span>
+                                <label style="cursor:pointer; border:1px solid var(--border); padding:10px; border-radius:6px; display:flex; align-items:center; gap:10px;">
+                                    <input type="radio" name="payment" value="maya"> <span style="font-size:12px; font-weight:600;">Maya</span>
                                 </label>
-                                <label style="cursor:pointer; border:1px solid var(--border); padding:10px; border-radius:6px; text-align:center;">
-                                    <input type="radio" name="payment" value="card"> <br> <span style="font-size:12px; font-weight:600;">Card</span>
+                                <label style="cursor:pointer; border:1px solid var(--border); padding:10px; border-radius:6px; display:flex; align-items:center; gap:10px;">
+                                    <input type="radio" name="payment" value="card"> <span style="font-size:12px; font-weight:600;">Card</span>
                                 </label>
                             </div>
                         </div>
@@ -137,7 +180,7 @@ ob_start();
         const now = new Date().getTime();
         const diffSecs = Math.floor((now - entryTime) / 1000);
         const diffMins = Math.floor(diffSecs / 60);
-        const diffHours = Math.floor(diffMins / 60);
+        const isDiscounted = document.getElementById('discount-toggle').checked;
 
         // Calculate
         let total = firstHourFee;
@@ -145,6 +188,11 @@ ob_start();
             const excessHours = Math.ceil((diffMins - 60) / 60);
             total += (excessHours * excessHourFee);
             document.getElementById('excess-fee-str').textContent = '₱' + (excessHours * excessHourFee).toFixed(2);
+        }
+
+        // Apply 20% Discount
+        if (isDiscounted) {
+            total = total * 0.8;
         }
 
         // Format duration
@@ -196,6 +244,7 @@ ob_start();
         const fd = new FormData();
         fd.append('identifier', "<?= $session['plate_number'] ?>");
         fd.append('payment_method', method);
+        fd.append('apply_discount', document.getElementById('discount-toggle').checked);
 
         fetch('<?= BASE_URL ?>/api/process_exit.php', { method: 'POST', body: fd })
             .then(r => r.json())

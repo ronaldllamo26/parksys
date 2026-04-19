@@ -9,103 +9,39 @@
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    // ── Smart Navigation Toggle (Final Validated Version) ──
     function toggleSidebar() {
         const body = document.body;
-        const sb = document.querySelector('.sidebar');
+        const isMobile = window.innerWidth <= 768;
+        const sb = document.getElementById('sidebar');
         const desktopIcon = document.getElementById('toggle-icon');
         const mobileIcon = document.querySelector('.mobile-menu-btn i');
-        const isMobile = window.innerWidth <= 768;
-
         if (!sb) return;
-
         if (isMobile) {
-            // Mobile Logic: Slide-out menu
             body.classList.toggle('sidebar-open');
-            sb.classList.remove('collapsed'); // Force labels to show on mobile
-            
             const isOpen = body.classList.contains('sidebar-open');
-            if (isOpen) {
-                sb.style.setProperty('left', '0', 'important');
-                sb.style.setProperty('transform', 'none', 'important');
-                sb.style.setProperty('visibility', 'visible', 'important');
-                sb.style.setProperty('opacity', '1', 'important');
-            } else {
-                sb.style.removeProperty('left');
-                sb.style.removeProperty('transform');
-                sb.style.removeProperty('visibility');
-                sb.style.removeProperty('opacity');
-            }
             if (mobileIcon) mobileIcon.setAttribute('data-lucide', isOpen ? 'x' : 'menu');
         } else {
-            // Desktop Logic: Collapse/Expand
             sb.classList.toggle('collapsed');
             const isCollapsed = sb.classList.contains('collapsed');
-            if (desktopIcon) {
-                desktopIcon.setAttribute('data-lucide', isCollapsed ? 'chevron-right' : 'chevron-left');
-            }
-            // Ensure mobile state is reset
+            if (desktopIcon) desktopIcon.setAttribute('data-lucide', isCollapsed ? 'chevron-right' : 'chevron-left');
             body.classList.remove('sidebar-open');
-            sb.style.removeProperty('left');
         }
-
         if(typeof lucide !== 'undefined') lucide.createIcons();
     }
-
-    // Close sidebar on overlay click
     document.addEventListener('click', (e) => {
         const overlay = document.querySelector('.sidebar-overlay');
         if (e.target === overlay) toggleSidebar();
     });
 </script>
-<style>
-    /* Mobile Navigation System */
-    @media (max-width: 768px) {
-        .sidebar-overlay {
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
-            z-index: 9999; display: none;
-            animation: fadeIn 0.2s ease-out;
-        }
-        body.sidebar-open .sidebar-overlay {
-            display: block !important;
-        }
-        .sidebar-close {
-            display: flex !important;
-            align-items: center; justify-content: center;
-            width: 36px; height: 36px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 8px; color: #fff; cursor: pointer;
-        }
-        body.sidebar-open .sidebar {
-            transform: none !important;
-            left: 0 !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            display: flex !important;
-        }
-        body.sidebar-open .nav-label {
-            display: inline-block !important;
-            margin-left: 12px !important;
-            opacity: 1 !important;
-        }
-        body.sidebar-open .nav-item {
-            justify-content: flex-start !important;
-            padding: 12px 20px !important;
-        }
-    }
-</style>
 </head>
 <body>
 
 <div class="sidebar-overlay"></div>
 
-<!-- ── Sidebar ── -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-brand">
     <div class="brand-icon"><i data-lucide="parking-circle"></i></div>
     <span class="brand-name">ParkSys Pro</span>
-    <!-- Mobile Close Button -->
     <div class="sidebar-close" onclick="toggleSidebar()" style="display: none; margin-left: auto;">
       <i data-lucide="x"></i>
     </div>
@@ -115,9 +51,9 @@
     <?php
     $role = $_SESSION[SESSION_USER_ROLE];
     $menu = [];
-
     if ($role === ROLE_SUPERADMIN) {
       $menu = [
+        ['icon'=>'terminal',          'label'=>'Command Center',      'href'=>'/views/superadmin/command_center.php'],
         ['icon'=>'bar-chart-3',      'label'=>'Analytics Dashboard', 'href'=>'/views/superadmin/analytics.php'],
         ['icon'=>'monitor-play',     'label'=>'Live Slot Monitor',   'href'=>'/views/admin/dashboard.php'],
         ['icon'=>'map',              'label'=>'Facility Layout',     'href'=>'/views/superadmin/zones.php'],
@@ -136,12 +72,12 @@
         ['icon'=>'activity',         'label'=>'System Health',    'href'=>'/views/admin/health.php'],
       ];
     }
-
     $current = $_SERVER['REQUEST_URI'];
     foreach ($menu as $item):
+      $fullHref = BASE_URL . $item['href'];
       $active = (strpos($current, $item['href']) !== false) ? 'active' : '';
     ?>
-    <a class="nav-item <?= $active ?>" href="<?= BASE_URL . $item['href'] ?>">
+    <a class="nav-item <?= $active ?>" href="<?= $fullHref ?>">
       <i class="nav-icon" data-lucide="<?= $item['icon'] ?>"></i>
       <span class="nav-label"><?= $item['label'] ?></span>
     </a>
@@ -154,78 +90,126 @@
       <div class="user-name"><?= htmlspecialchars($_SESSION[SESSION_USER_NAME]) ?></div>
       <div class="user-role"><?= ucfirst($_SESSION[SESSION_USER_ROLE]) ?></div>
     </div>
-    <a href="<?= BASE_URL ?>/api/auth_logout.php" title="Sign Out" style="color:var(--danger); margin-left:auto; display:flex;">
-      <i data-lucide="log-out" style="width:18px"></i>
-    </a>
+    <button onclick="showShiftSummary()" title="Close Shift & Sign Out" style="background:none; border:none; color:var(--danger); margin-left:auto; display:flex; cursor:pointer; padding:4px;">
+      <i data-lucide="power" style="width:18px"></i>
+    </button>
   </div>
 </aside>
 
-<!-- ── Main ── -->
 <div class="main-wrap">
   <header class="topbar">
     <div class="topbar-left">
       <button class="mobile-menu-btn" onclick="toggleSidebar()" title="Toggle Menu">
         <i data-lucide="menu"></i>
       </button>
-      
-      <button class="sidebar-toggle desktop-only" onclick="toggleSidebar()" title="Toggle Sidebar">
-        <i data-lucide="chevron-left" id="toggle-icon"></i>
+      <button class="sidebar-toggle desktop-only" onclick="toggleSidebar()" title="Toggle Sidebar" style="background:none; border:none; cursor:pointer; color:var(--text-muted); padding:8px; display:flex;">
+        <i data-lucide="chevron-left" id="toggle-icon" style="width:20px;"></i>
       </button>
-      
-      <div class="topbar-search">
+      <div class="topbar-search" style="position: relative;">
         <i data-lucide="search"></i>
-        <input type="text" placeholder="Search plates, transactions, or slots...">
+        <input type="text" id="global-search" placeholder="Search plates, transactions, or staff..." autocomplete="off">
+        <div id="search-results-dropdown" class="card" style="display: none; position: absolute; top: 110%; left: 0; right: 0; z-index: 10000; padding: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid var(--border); max-height: 400px; overflow-y: auto;"></div>
       </div>
     </div>
 
     <div class="topbar-right">
-      <div class="live-indicator">
-        <span class="live-dot"></span>
-        SYSTEM LIVE
-      </div>
+      <div class="live-indicator"><span class="live-dot"></span>SYSTEM LIVE</div>
       <div class="topbar-time" id="topbar-clock"></div>
-      
       <div style="width: 1px; height: 24px; background: var(--border); margin: 0 8px;"></div>
-      
       <button class="sidebar-toggle" id="dark-mode-toggle" title="Toggle Theme">
         <i data-lucide="moon" style="width:18px" id="theme-icon"></i>
       </button>
-
-      <button class="sidebar-toggle" title="Notifications">
+      <button class="sidebar-toggle" id="notif-toggle" title="Notifications" style="position: relative;">
         <i data-lucide="bell" style="width:18px"></i>
+        <span id="notif-badge" style="position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: var(--danger); border-radius: 50%; display: none;"></span>
       </button>
+      <div class="notif-dropdown" id="notif-dropdown">
+        <div class="notif-header">
+          <span>Notifications</span>
+          <span onclick="clearNotifications()" style="font-size: 10px; color: var(--primary); cursor: pointer; font-weight: 800;">Clear All</span>
+        </div>
+        <div id="notif-list" style="max-height: 400px; overflow-y: auto;">
+            <div class="notif-item unread">
+                <div class="icon" style="background: #ecfdf5; color: var(--success);"><i data-lucide="shield-check" style="width:16px"></i></div>
+                <div class="content"><div class="title">System Secure</div><div class="desc">All gate sensors optimal.</div><div class="time">Just Now</div></div>
+            </div>
+        </div>
+      </div>
     </div>
   </header>
 
-  <div class="breadcrumb" style="padding: 32px 40px 0 40px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted);">
-    <i data-lucide="home" style="width:14px"></i>
-    <span>/</span>
-    <span style="color: var(--text-main); font-weight: 500;"><?= $pageTitle ?? 'Dashboard' ?></span>
-  </div>
-
   <script>
-    // Theme & UI Logic
-    const body = document.body;
-    const themeToggle = document.getElementById('dark-mode-toggle');
-    const themeIcon = document.getElementById('theme-icon');
-
-    if (localStorage.getItem('theme') === 'dark') {
-      body.classList.add('dark');
-      if(themeIcon) themeIcon.setAttribute('data-lucide', 'sun');
+    // Universal Search JS
+    const sInput = document.getElementById('global-search');
+    const sDropdown = document.getElementById('search-results-dropdown');
+    let sTimeout;
+    if (sInput) {
+        sInput.addEventListener('input', (e) => {
+            clearTimeout(sTimeout);
+            const q = e.target.value.trim();
+            if (q.length < 2) { sDropdown.style.display = 'none'; return; }
+            sTimeout = setTimeout(() => {
+                fetch('<?= BASE_URL ?>/api/universal_search.php?q=' + encodeURIComponent(q))
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.results && data.results.length > 0) {
+                            sDropdown.innerHTML = data.results.map(r => `
+                                <a href="${r.link}" style="display: flex; flex-direction: column; padding: 10px 12px; text-decoration: none; border-radius: 8px; transition: background 0.2s;">
+                                    <span style="font-size: 13px; font-weight: 700; color: var(--text-main);">${r.title}</span>
+                                    <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">${r.type}</span>
+                                </a>
+                            `).join('');
+                            sDropdown.style.display = 'block';
+                            sDropdown.querySelectorAll('a').forEach(a => {
+                                a.onmouseover = () => a.style.background = 'var(--bg)';
+                                a.onmouseout = () => a.style.background = 'transparent';
+                            });
+                        } else {
+                            sDropdown.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 12px;">No results found</div>';
+                            sDropdown.style.display = 'block';
+                        }
+                    });
+            }, 300);
+        });
+        document.addEventListener('click', (e) => {
+            if (!sInput.contains(e.target) && !sDropdown.contains(e.target)) sDropdown.style.display = 'none';
+        });
     }
 
-    if (themeToggle) {
+    // Notifications & Theme Logic
+    const notifToggle = document.getElementById('notif-toggle');
+    const notifDropdown = document.getElementById('notif-dropdown');
+    function clearNotifications() {
+        document.getElementById('notif-list').innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-muted); font-size: 12px;">No notifications</div>';
+        document.getElementById('notif-badge').style.display = 'none';
+        lucide.createIcons();
+    }
+    if(notifToggle) {
+        notifToggle.addEventListener('click', (e) => { e.stopPropagation(); notifDropdown.classList.toggle('show'); });
+        document.addEventListener('click', () => notifDropdown.classList.remove('show'));
+    }
+    const themeToggle = document.getElementById('dark-mode-toggle');
+    if(themeToggle) {
         themeToggle.addEventListener('click', () => {
-          body.classList.toggle('dark');
-          const isDark = body.classList.contains('dark');
-          localStorage.setItem('theme', isDark ? 'dark' : 'light');
-          if(themeIcon) themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
-          if(typeof lucide !== 'undefined') lucide.createIcons();
+            document.body.classList.toggle('dark');
+            const isDark = document.body.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            document.getElementById('theme-icon').setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+            lucide.createIcons();
         });
+    }
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark');
+        document.getElementById('theme-icon').setAttribute('data-lucide', 'sun');
     }
   </script>
 
   <main class="main-content">
+    <div class="breadcrumb" style="margin-bottom: 24px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted);">
+      <i data-lucide="home" style="width:14px"></i>
+      <span>/</span>
+      <span style="color: var(--text-main); font-weight: 500;"><?= $pageTitle ?? 'Dashboard' ?></span>
+    </div>
     <?= $content ?? '' ?>
   </main>
   
@@ -235,7 +219,6 @@
   </footer>
 </div>
 
-<!-- Scripts -->
 <script src="<?= BASE_URL ?>/assets/js/parksys.js"></script>
 <script>lucide.createIcons();</script>
 <script>
@@ -244,6 +227,50 @@
   if(el) el.textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   setTimeout(tick, 1000);
 })();
+</script>
+
+<!-- Shift Summary Modal -->
+<div id="shift-modal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.8); backdrop-filter:blur(8px); z-index:11000; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--sidebar-bg); width:100%; max-width:440px; border-radius:20px; border:1px solid var(--border); overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+    <div style="padding:32px 32px 24px 32px; text-align:center;">
+      <div style="width:56px; height:56px; background:var(--primary-light); color:var(--primary); border-radius:14px; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+        <i data-lucide="clipboard-check" style="width:28px; height:28px;"></i>
+      </div>
+      <h2 style="font-size:20px; font-weight:800; color:var(--text-main); margin-bottom:4px;">End of Shift Report</h2>
+      <p style="font-size:13px; color:var(--text-muted);" id="shift-date"></p>
+    </div>
+    <div style="padding:0 32px 32px 32px;">
+      <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:24px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--border);">
+          <span style="font-size:12px; font-weight:600; color:var(--text-muted);">Total Revenue</span>
+          <span style="font-size:16px; font-weight:800; color:var(--primary);" id="shift-rev">₱0.00</span>
+        </div>
+      </div>
+      <div style="display:grid; gap:12px;">
+        <button onclick="window.open('<?= BASE_URL ?>/views/admin/print_remittance.php', '_blank')" class="btn" style="width:100%; padding:14px; background:var(--primary-light); color:var(--primary); border:1px solid var(--primary); font-weight:700;">
+          <i data-lucide="printer" style="width:16px; margin-right:8px; vertical-align:middle;"></i> Print Remittance Slip
+        </button>
+        <button onclick="location.href='<?= BASE_URL ?>/api/auth_logout.php'" class="btn btn-primary" style="width:100%; padding:14px; background:var(--danger); color:#fff; border:none;">Confirm Handover & Logout</button>
+        <button onclick="document.getElementById('shift-modal').style.display='none'" style="background:none; border:none; color:var(--text-muted); font-size:13px; font-weight:600; cursor:pointer; padding:8px;">Back to Dashboard</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showShiftSummary() {
+    const modal = document.getElementById('shift-modal');
+    fetch('<?= BASE_URL ?>/api/get_shift_summary.php')
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                document.getElementById('shift-date').textContent = res.date + ' — Staff: ' + res.staff;
+                document.getElementById('shift-rev').textContent = '₱' + res.metrics.total_revenue.toLocaleString(undefined, {minimumFractionDigits:2});
+                modal.style.display = 'flex';
+                lucide.createIcons();
+            }
+        });
+}
 </script>
 </body>
 </html>

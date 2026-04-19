@@ -39,10 +39,28 @@ ob_start();
     </div>
 
     <?php if ($message): ?>
-        <div style="padding: 14px 20px; background: var(--success); color: #fff; border-radius: 8px; margin-bottom: 24px; font-size: 14px;">
+        <div style="padding: 14px 20px; background: var(--success); color: #fff; border-radius: 8px; margin-bottom: 24px; font-size: 14px; animation: slideIn 0.3s ease-out;">
             <i data-lucide="check-circle" style="width:16px; margin-right:8px; vertical-align:middle;"></i> <?= $message ?>
         </div>
     <?php endif; ?>
+
+    <?php if (isset($_GET['security_error'])): ?>
+        <div style="padding: 14px 20px; background: #ef4444; color: #fff; border-radius: 8px; margin-bottom: 24px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2); animation: shake 0.5s;">
+            <i data-lucide="shield-alert" style="width:16px; margin-right:8px; vertical-align:middle;"></i> Security Violation: Invalid Superadmin Password. Access to Architectural Export was denied.
+        </div>
+    <?php endif; ?>
+
+<style>
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+@keyframes slideIn {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+</style>
 
     <div class="settings-grid">
         <!-- Nav Tabs -->
@@ -116,7 +134,7 @@ ob_start();
             <div class="card settings-section" id="section-database" style="display: none;">
                 <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 32px;">Database Tools</h3>
                 <div style="display: grid; gap: 16px;">
-                    <button type="button" class="btn btn-secondary" style="justify-content: flex-start; gap: 12px; width: 100%; padding: 20px;">
+                    <button type="button" onclick="openSecurityModal()" class="btn btn-secondary" style="justify-content: flex-start; gap: 12px; width: 100%; padding: 20px;">
                         <i data-lucide="download"></i> 
                         <div style="text-align: left;">
                             <div style="font-weight: 700;">Export Full Database</div>
@@ -140,6 +158,29 @@ ob_start();
     </div>
 </div>
 
+<!-- Security Verification Modal -->
+<div class="modal-overlay" id="security-modal" onclick="closeModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div style="text-align: center; margin-bottom: 24px;">
+            <div style="width: 56px; height: 56px; background: #fef2f2; color: var(--danger); border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                <i data-lucide="shield-check" style="width:28px; height:28px;"></i>
+            </div>
+            <h2 style="font-size: 18px; font-weight: 800;">High-Security Access</h2>
+            <p style="font-size: 12px; color: var(--text-muted);">Please verify your Superadmin password to proceed with the database architectural export.</p>
+        </div>
+        <form id="export-verify-form" action="<?= BASE_URL ?>/api/export_db.php" method="POST">
+            <div class="form-group">
+                <label class="label">Admin Password</label>
+                <input type="password" name="verify_password" class="input" placeholder="Enter your password" required>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px;">
+                <button type="button" onclick="closeModal()" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="background: var(--danger); border-color: var(--danger);">Verify & Download</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 function switchTab(sectionId, btn) {
     // Hide all sections
@@ -152,6 +193,16 @@ function switchTab(sectionId, btn) {
     btn.classList.add('active');
     
     lucide.createIcons();
+}
+
+function openSecurityModal() {
+    document.getElementById('security-modal').classList.add('open');
+}
+
+function closeModal(e) {
+    if (!e || e.target.classList.contains('modal-overlay')) {
+        document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+    }
 }
 </script>
 

@@ -15,45 +15,122 @@ $pageTitle = 'Rate Configuration';
 ob_start();
 ?>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-    <h2 class="section-title">Active Pricing Rates</h2>
-    <button class="btn btn-primary" onclick="alert('Updating rates feature coming soon!')">Update Rates</button>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+    <div>
+        <h2 class="section-title" style="margin-bottom: 4px;">Revenue & Pricing Strategy</h2>
+        <p style="font-size: 13px; color: var(--text-muted);">Manage parking fees and grace periods for all vehicle categories.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openRateModal()">
+        <i data-lucide="edit-3" style="width:14px; margin-right:8px; vertical-align:middle;"></i> Update Pricing Rates
+    </button>
 </div>
 
-<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+<div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px;">
     <?php foreach ($rates as $r): ?>
-    <div class="card" style="padding: 24px; position: relative;">
-        <div style="position: absolute; top: 20px; right: 20px; color: var(--primary);">
-            <i data-lucide="<?= $r['vehicle_type'] === 'car' ? 'car' : ($r['vehicle_type'] === 'motorcycle' ? 'bike' : 'truck') ?>"></i>
+    <div class="card" style="padding: 32px; position: relative; border: 1px solid var(--border); overflow: hidden;">
+        <!-- Background Icon Accent -->
+        <div style="position: absolute; top: -20px; right: -20px; opacity: 0.05; transform: rotate(-15deg);">
+            <i data-lucide="<?= $r['vehicle_type'] === 'car' ? 'car' : ($r['vehicle_type'] === 'motorcycle' ? 'bike' : 'truck') ?>" style="width: 140px; height: 140px;"></i>
         </div>
-        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 8px;">
-            <?= htmlspecialchars($r['vehicle_type']) ?> Category
+
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+            <div style="width: 40px; height: 40px; background: var(--primary-light); color: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="<?= $r['vehicle_type'] === 'car' ? 'car' : ($r['vehicle_type'] === 'motorcycle' ? 'bike' : 'truck') ?>" style="width: 20px;"></i>
+            </div>
+            <div>
+                <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.1em;">
+                    <?= htmlspecialchars($r['vehicle_type']) ?> Category
+                </div>
+                <div style="font-size: 13px; color: var(--text-muted); font-weight: 500;">Active Strategy</div>
+            </div>
         </div>
-        <div style="font-size: 32px; font-weight: 800; color: var(--text-main); margin-bottom: 20px;">
-            <?= peso($r['first_hour_fee']) ?> <span style="font-size: 14px; font-weight: 500; color: var(--muted);">/ 1st hr</span>
+
+        <div style="margin-bottom: 24px;">
+            <div style="font-size: 48px; font-weight: 900; color: var(--text-main); line-height: 1;">
+                <?= peso($r['first_hour_fee']) ?>
+                <span style="font-size: 14px; font-weight: 600; color: var(--text-muted); letter-spacing: 0;">/ 1st hour</span>
+            </div>
         </div>
         
-        <div style="border-top: 1px solid var(--border); padding-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div>
-                <div style="font-size: 11px; color: var(--muted);">Excess / Hour</div>
-                <div style="font-weight: 600;"><?= peso($r['excess_hour_fee']) ?></div>
+                <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase;">Excess / Hr</div>
+                <div style="font-weight: 800; color: var(--text-main); font-size: 15px;"><?= peso($r['excess_hour_fee']) ?></div>
             </div>
             <div>
-                <div style="font-size: 11px; color: var(--muted);">Grace Period</div>
-                <div style="font-weight: 600;"><?= $r['grace_minutes'] ?> mins</div>
+                <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase;">Grace Period</div>
+                <div style="font-weight: 800; color: var(--text-main); font-size: 15px;"><?= $r['grace_minutes'] ?> mins</div>
             </div>
-            <div>
-                <div style="font-size: 11px; color: var(--muted);">Flat Day Cap</div>
-                <div style="font-weight: 600;"><?= $r['flat_day_rate'] ? peso($r['flat_day_rate']) : 'None' ?></div>
-            </div>
-            <div>
-                <div style="font-size: 11px; color: var(--muted);">Effective Date</div>
-                <div style="font-weight: 600; font-size: 12px;"><?= date('M d, Y', strtotime($r['effective_from'])) ?></div>
+            <div style="grid-column: span 2; border-top: 1px dashed var(--border); padding-top: 12px; margin-top: 4px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">24-Hr Flat Cap</div>
+                    <div style="font-weight: 800; color: var(--primary);"><?= $r['flat_day_rate'] ? peso($r['flat_day_rate']) : 'No Limit' ?></div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Updated</div>
+                    <div style="font-weight: 600; font-size: 12px; color: var(--text-main);"><?= date('M d, Y', strtotime($r['effective_from'])) ?></div>
+                </div>
             </div>
         </div>
     </div>
     <?php endforeach; ?>
 </div>
+
+<!-- Update Rate Modal -->
+<div class="modal-overlay" id="rate-modal" onclick="closeModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div style="text-align: center; margin-bottom: 32px;">
+            <div style="width: 56px; height: 56px; background: var(--primary-light); color: var(--primary); border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                <i data-lucide="trending-up" style="width:28px; height:28px;"></i>
+            </div>
+            <h2 style="font-size: 20px; font-weight: 800;">Update Pricing Strategy</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Configure new rates that will take effect immediately.</p>
+        </div>
+        <form id="update-rate-form">
+            <div class="form-group">
+                <label class="label">Vehicle Category</label>
+                <select class="select" style="width: 100%;">
+                    <option value="car">Standard Car</option>
+                    <option value="motorcycle">Motorcycle</option>
+                    <option value="van">Van / SUV</option>
+                </select>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="label">First Hour Fee (₱)</label>
+                    <input type="number" class="input" value="40" step="1">
+                </div>
+                <div class="form-group">
+                    <label class="label">Excess Hour Fee (₱)</label>
+                    <input type="number" class="input" value="10" step="1">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="label">Grace Period (Mins)</label>
+                    <input type="number" class="input" value="15">
+                </div>
+                <div class="form-group">
+                    <label class="label">24-Hr Max Cap (₱)</label>
+                    <input type="number" class="input" placeholder="e.g. 300">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px;">
+                <button type="button" onclick="closeModal()" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Publish New Rates</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openRateModal() { document.getElementById('rate-modal').classList.add('open'); }
+function closeModal(e) {
+    if (!e || e.target.classList.contains('modal-overlay')) {
+        document.getElementById('rate-modal').classList.remove('open');
+    }
+}
+</script>
 
 <?php
 $content = ob_get_clean();

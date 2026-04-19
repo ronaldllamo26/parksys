@@ -100,36 +100,82 @@ ob_start();
 </div>
 
 <script>
-function simulateAIScan() {
+function validatePlate() {
+    const plate = document.getElementById('plate').value;
+    const type = document.getElementById('vtype').value;
     const feedback = document.getElementById('ai-feedback');
+    const aitext = document.getElementById('ai-text');
+    const slotSelect = document.getElementById('slot_id');
+    
+    if (plate.length < 3) return;
+
+    fetch(`<?= BASE_URL ?>/api/validate_plate.php?plate=${plate}&type=${type}`)
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                feedback.style.display = 'block';
+                feedback.style.borderColor = res.color;
+                feedback.style.background = res.color + '10'; // 10% opacity
+                
+                aitext.innerHTML = `<strong style="color:${res.color}">[RISK: ${res.risk_level}]</strong> ${res.insights}`;
+                
+                // Disable button if CRITICAL or HIGH risk
+                const submitBtn = document.getElementById('submit-btn');
+                if (res.risk_level === 'CRITICAL' || res.risk_level === 'HIGH') {
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.5';
+                    submitBtn.innerHTML = '<i data-lucide="shield-off"></i> ENTRY BLOCKED';
+                } else {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.innerHTML = '<i data-lucide="check-circle"></i> Confirm Check-in';
+                }
+
+                // Auto-select recommended slot
+                if (res.recommendation && res.risk_level !== 'HIGH' && res.risk_level !== 'CRITICAL') {
+                    slotSelect.value = res.recommendation.id;
+                    const opt = slotSelect.querySelector(`option[value="${res.recommendation.id}"]`);
+                    if (opt) opt.textContent = `${res.recommendation.label} (Recommended)`;
+                }
+                if(typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        });
+}
+
+// Trigger validation when plate changes
+document.getElementById('plate').addEventListener('input', debounce(validatePlate, 500));
+document.getElementById('vtype').addEventListener('change', validatePlate);
+
+function debounce(func, timeout = 300) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { func.apply(this, args); }, timeout);
+    };
+}
+
+function simulateAIScan() {
     const plateInput = document.getElementById('plate');
     const vType = document.getElementById('vtype');
-    const aitext = document.getElementById('ai-text');
     
     // Random Plate Simulation
     const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
     const nums = "0123456789";
+    const specialPlates = ['AAA-0000', 'CAR-666', 'BANNED-99']; // Test blacklist
+    
     let p = "";
-    for(let i=0; i<3; i++) p += letters.charAt(Math.floor(Math.random()*letters.length));
-    p += "-";
-    for(let i=0; i<4; i++) p += nums.charAt(Math.floor(Math.random()*nums.length));
+    if (Math.random() > 0.8) {
+        p = specialPlates[Math.floor(Math.random() * specialPlates.length)];
+    } else {
+        for(let i=0; i<3; i++) p += letters.charAt(Math.floor(Math.random()*letters.length));
+        p += "-";
+        for(let i=0; i<4; i++) p += nums.charAt(Math.floor(Math.random()*nums.length));
+    }
     
     plateInput.value = p;
     vType.value = Math.random() > 0.7 ? (Math.random() > 0.5 ? 'van' : 'motorcycle') : 'car';
     
-    feedback.style.display = 'block';
-    aitext.textContent = `Autonomous Detection: ${p} recognized as ${vType.value.toUpperCase()}.`;
-    
-    recommendSlot();
-}
-
-function recommendSlot() {
-    const select = document.getElementById('slot_id');
-    if (select.options.length > 1) {
-        select.selectedIndex = 1; // Pick the first available
-        const feedback = document.getElementById('ai-feedback');
-        feedback.style.display = 'block';
-    }
+    validatePlate();
 }
 
 document.getElementById('entry-form').onsubmit = function(e) {
@@ -137,8 +183,14 @@ document.getElementById('entry-form').onsubmit = function(e) {
     const btn = document.getElementById('submit-btn');
     const alert = document.getElementById('alert');
     
+    if (!document.getElementById('slot_id').value) {
+        alert.textContent = 'Please select a parking slot.';
+        alert.className = 'alert alert-danger show';
+        return;
+    }
+
     btn.disabled = true;
-    btn.textContent = 'Processing Entry...';
+    btn.innerHTML = '<i class="spinner-border spinner-border-sm"></i> Validating & Processing...';
     
     const fd = new FormData();
     fd.append('slot_id', document.getElementById('slot_id').value);
@@ -149,12 +201,13 @@ document.getElementById('entry-form').onsubmit = function(e) {
         .then(r => r.json())
         .then(res => {
             if (res.success) {
-                alert.textContent = 'Entry recorded! Redirecting...';
+                alert.textContent = 'Security Check Passed. Entry recorded!';
                 alert.className = 'alert alert-success show';
                 setTimeout(() => window.location.href = 'dashboard.php', 1000);
             } else {
                 btn.disabled = false;
-                btn.textContent = 'Confirm Check-in';
+                btn.innerHTML = '<i data-lucide="check-circle" style="width:18px; margin-right:8px;"></i> Confirm Check-in';
+                if(typeof lucide !== 'undefined') lucide.createIcons();
                 alert.textContent = res.message;
                 alert.className = 'alert alert-danger show';
             }

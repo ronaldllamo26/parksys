@@ -16,9 +16,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $identifier    = clean($_POST['identifier']     ?? '');
 $paymentMethod = clean($_POST['payment_method'] ?? 'cash');
+$isDiscounted  = (($_POST['apply_discount'] ?? 'false') === 'true');
 $adminId       = (int) $_SESSION[SESSION_USER_ID];
 
 $ctrl   = new SessionController();
-$result = $ctrl->processExit($identifier, $adminId, $paymentMethod);
+$result = $ctrl->processExit($identifier, $adminId, $paymentMethod, $isDiscounted);
 
 echo json_encode($result);

@@ -41,6 +41,12 @@ class SessionController {
             return $this->fail('Invalid vehicle type.');
         }
 
+        // --- Security Check (Blacklist) ---
+        $blacklist = ['AAA-0000', 'CRIMINAL-1', 'BANNED-99', 'CAR-666'];
+        if (in_array($plate, $blacklist, true)) {
+            return $this->fail("SECURITY BLOCK: Plate {$plate} is on the system blacklist. Access denied.");
+        }
+
         // --- Check slot availability (lock row to prevent race condition) ---
         $slotStmt = $this->db->prepare("
             SELECT id, slot_code, status FROM slots WHERE id = :id FOR UPDATE
@@ -90,6 +96,13 @@ class SessionController {
             ]);
             $sessionId = (int) $this->db->lastInsertId();
 
+            // --- Log Audit ---
+            auditLog($this->db, $adminId, 'VEHICLE_ENTRY', 'sessions', $sessionId, [
+                'plate' => $plate,
+                'slot'  => $slot['slot_code'],
+                'ref'   => $refId
+            ]);
+
             // --- Update slot to Occupied ---
             $this->db->prepare("UPDATE slots SET status = 'occupied' WHERE id = :id")
                      ->execute([':id' => $slotId]);
@@ -130,14 +143,15 @@ class SessionController {
      * @param  string $identifier   Reference ID OR plate number
      * @param  string $paymentMethod cash | gcash | card | maya
      * @param  int    $adminId
+     * @param  bool   $isDiscounted
      * @return array  Full billing breakdown + receipt number
      */
-    public function processExit(string $identifier, string $adminId, string $paymentMethod = 'cash'): array {
+    public function processExit(string $identifier, int $adminId, string $paymentMethod = 'cash', bool $isDiscounted = false): array {
         $identifier = strtoupper(trim($identifier));
 
         // --- Find active session ---
         $stmt = $this->db->prepare("
-            SELECT s.*, sl.slot_code, sl.id AS slot_db_id
+            SELECT s.*, sl.slot_code, sl.slot_type, sl.id AS slot_db_id
             FROM   sessions s
             JOIN   slots sl ON s.slot_id = sl.id
             WHERE  (s.reference_id = :ref OR s.plate_number = :plate)
@@ -156,7 +170,7 @@ class SessionController {
         $exitTime  = new DateTime();
 
         try {
-            $fee = $this->billing->calculateFee($session['vehicle_type'], $entryTime, $exitTime);
+            $fee = $this->billing->calculateFee($session['vehicle_type'], $entryTime, $exitTime, $isDiscounted, $session['slot_type']);
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
         }
@@ -182,9 +196,16 @@ class SessionController {
             // Record transaction
             $receiptNo = $this->billing->recordTransaction($session['id'], $fee, $paymentMethod, (int)$adminId);
 
-            // Free the slot
+            // Free up slot
             $this->db->prepare("UPDATE slots SET status = 'available' WHERE id = :id")
-                     ->execute([':id' => $session['slot_db_id']]);
+                ->execute([':id' => $session['slot_db_id']]);
+
+            // --- Log Audit ---
+            auditLog($this->db, $adminId, 'VEHICLE_EXIT', 'sessions', $session['id'], [
+                'plate' => $session['plate_number'],
+                'fee'   => $fee['total_fee'],
+                'ref'   => $session['reference_id']
+            ]);
 
             $this->db->commit();
 
