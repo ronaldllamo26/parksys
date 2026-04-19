@@ -6,10 +6,9 @@
 
 ### 🎥 System Demonstration
 
+https://github.com/ronaldllamo26/parksys/raw/main/assets/parksys_demo.mp4
+
 <div align="center">
-  <!-- I-drag and drop mo lang yung video file dito sa GitHub Editor para mapalitan ito ng actual video link -->
-  https://github.com/ronaldllamo26/parksys/raw/main/assets/parksys_demo.mp4
-  
   <p align="center">
     <img src="https://img.shields.io/badge/PHP-8.2-777BB4?style=for-the-badge&logo=php&logoColor=white" />
     <img src="https://img.shields.io/badge/MySQL-MariaDB-003545?style=for-the-badge&logo=mariadb&logoColor=white" />
