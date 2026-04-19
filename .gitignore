@@ -1,6 +1,19 @@
-# ParkSys Pro GitIgnore
-/scratch/
-/temp/
-.DS_Store
-*.log
+# Ignore Database Configuration
 config/database.php
+
+# Ignore logs
+logs/
+*.log
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore XAMPP specific
+/php/
+/apache/
+/mysql/
+
+# Ignore uploads
+uploads/*
+!uploads/.gitkeep

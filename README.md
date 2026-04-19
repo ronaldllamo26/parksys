@@ -57,5 +57,14 @@
 
 ---
 
+## 📄 System Documentation
+
+For detailed technical reports, security analysis, and project documentation, please refer to the [docs/](docs/) folder.
+
+- **Technical Manuscript**: Professional report following the 16-section project template.
+- **Security Audit**: Deep dive into the "Iron Dome" defense suite.
+
+---
+
 Developed with ❤️ for Academic Excellence.
 **ParkSys Pro — Scaling Mobility Intelligence.**
