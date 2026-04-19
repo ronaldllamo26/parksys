@@ -8,9 +8,7 @@
 
 <div align="center">
   <!-- I-drag and drop mo lang yung video file dito sa GitHub Editor para mapalitan ito ng actual video link -->
-  <video src="https://github.com/ronaldllamo26/parksys/raw/main/assets/parksys_demo.mp4" width="100%" controls>
-    Your browser does not support the video tag.
-  </video>
+  https://github.com/ronaldllamo26/parksys/raw/main/assets/parksys_demo.mp4
   
   <p align="center">
     <img src="https://img.shields.io/badge/PHP-8.2-777BB4?style=for-the-badge&logo=php&logoColor=white" />
