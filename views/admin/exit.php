@@ -20,10 +20,14 @@ if ($plate) {
             r.id as rate_id,
             r.first_hour_fee, 
             r.excess_hour_fee, 
-            r.grace_minutes
+            r.grace_minutes,
+            u.id as user_id,
+            u.membership_type,
+            u.wallet_balance
         FROM sessions sess
         JOIN slots s ON sess.slot_id = s.id
-        JOIN rates r ON r.is_current = 1 AND r.vehicle_type = (CASE WHEN s.slot_type = 'vip' THEN 'vip' ELSE sess.vehicle_type END)
+        LEFT JOIN users u ON sess.user_id = u.id
+        JOIN rates r ON r.is_current = 1 AND r.vehicle_type = (CASE WHEN (s.slot_type = 'vip' OR u.membership_type = 'vip') THEN 'vip' ELSE sess.vehicle_type END)
         WHERE sess.plate_number = :plate AND sess.status = 'active'
         LIMIT 1
     ");
@@ -151,6 +155,18 @@ ob_start();
                                 <label style="cursor:pointer; border:1px solid var(--border); padding:10px; border-radius:6px; display:flex; align-items:center; gap:10px;">
                                     <input type="radio" name="payment" value="card"> <span style="font-size:12px; font-weight:600;">Card</span>
                                 </label>
+                                <?php if ($session['user_id']): ?>
+                                <label style="cursor:pointer; border:1px solid var(--primary); background: var(--primary-light); padding:10px; border-radius:6px; display:flex; align-items:center; gap:10px; grid-column: span 2;">
+                                    <input type="radio" name="payment" value="wallet" <?= $session['wallet_balance'] < 1 ? 'disabled' : 'checked' ?>> 
+                                    <div style="flex:1;">
+                                        <div style="font-size:12px; font-weight:700; color: var(--primary);">Digital Wallet (In-App)</div>
+                                        <div style="font-size:10px; color: var(--primary); opacity:0.8;">Available Balance: <?= peso($session['wallet_balance']) ?></div>
+                                    </div>
+                                    <?php if($session['wallet_balance'] < 1): ?>
+                                        <span style="font-size:9px; color:var(--danger); font-weight:700;">LOW BALANCE</span>
+                                    <?php endif; ?>
+                                </label>
+                                <?php endif; ?>
                             </div>
                         </div>
 
@@ -175,6 +191,7 @@ ob_start();
     const firstHourFee = <?= $session['first_hour_fee'] ?>;
     const excessHourFee = <?= $session['excess_hour_fee'] ?>;
     const graceMins = <?= $session['grace_minutes'] ?>;
+    const userBalance = <?= $session['wallet_balance'] ?? 0 ?>;
 
     function updateLiveBill() {
         const now = new Date().getTime();
@@ -210,10 +227,16 @@ ob_start();
     document.getElementById('exit-form').onsubmit = function(e) {
         e.preventDefault();
         const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
-        const total = document.getElementById('live-bill').textContent;
+        const totalText = document.getElementById('live-bill').textContent;
+        const totalValue = parseFloat(totalText.replace('₱', '').replace(',', ''));
+
+        if (paymentMethod === 'wallet' && userBalance < totalValue) {
+            alert('Insufficient Wallet Balance! Current: ₱' + userBalance.toFixed(2) + ' | Required: ₱' + totalValue.toFixed(2));
+            return;
+        }
 
         if (paymentMethod === 'gcash' || paymentMethod === 'maya') {
-            showPaymentModal(paymentMethod, total);
+            showPaymentModal(paymentMethod, totalText);
         } else {
             processFinalExit(paymentMethod);
         }

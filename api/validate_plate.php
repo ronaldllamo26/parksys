@@ -32,9 +32,15 @@ $stmt = $db->prepare("
 $stmt->execute([':p' => $plate]);
 $unpaidCount = (int)($stmt->fetch()['unpaid'] ?? 0);
 
-// 4. Smart Slot Recommendation Logic
-// Prioritize slots that match the vehicle type exactly
-$slotType = ($type === 'motorcycle') ? 'motorcycle' : 'standard';
+// 4. Check for User/VIP Status
+$stmt = $db->prepare("SELECT id, name, membership_type, wallet_balance FROM users WHERE plate_number = :p LIMIT 1");
+$stmt->execute([':p' => $plate]);
+$user = $stmt->fetch();
+$isVIP = ($user && $user['membership_type'] === 'vip');
+
+// 5. Smart Slot Recommendation Logic
+// Prioritize VIP slots for VIP members, or match vehicle type
+$prefType = $isVIP ? 'vip' : (($type === 'motorcycle') ? 'motorcycle' : 'standard');
 
 $stmt = $db->prepare("
     SELECT s.id, s.slot_code, z.name as zone_name 
@@ -43,10 +49,10 @@ $stmt = $db->prepare("
     WHERE s.status = 'available' AND s.slot_type = :st 
     LIMIT 1
 ");
-$stmt->execute([':st' => $slotType]);
+$stmt->execute([':st' => $prefType]);
 $recSlot = $stmt->fetch();
 
-// If no perfect match, find any available standard slot
+// If no perfect match (e.g. no VIP slot left), find any available standard slot
 if (!$recSlot) {
     $recSlot = $db->query("
         SELECT s.id, s.slot_code, z.name as zone_name 
@@ -58,10 +64,10 @@ if (!$recSlot) {
     ")->fetch();
 }
 
-// 5. Determine Security Insights
+// 6. Determine Security Insights
 $riskLevel = 'LOW';
-$insights  = 'Vehicle cleared. No security flags detected.';
-$color     = '#10b981'; // Success Green
+$insights  = $isVIP ? "VIP MEMBER DETECTED: Welcome back, {$user['name']}!" : 'Vehicle cleared. No security flags detected.';
+$color     = $isVIP ? '#8b5cf6' : '#10b981'; // Purple for VIP, Green for Standard
 
 if ($active) {
     $riskLevel = 'HIGH';
@@ -88,5 +94,11 @@ jsonResponse([
     'recommendation' => $recSlot ? [
         'id'    => $recSlot['id'],
         'label' => "{$recSlot['zone_name']} — {$recSlot['slot_code']}"
+    ] : null,
+    'user' => $user ? [
+        'id' => $user['id'],
+        'name' => $user['name'],
+        'membership' => $user['membership_type'],
+        'balance' => $user['wallet_balance']
     ] : null
 ]);

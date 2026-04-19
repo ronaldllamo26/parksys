@@ -25,10 +25,12 @@ ob_start();
         <thead>
             <tr>
                 <th>User Name</th>
-                <th>Email Address</th>
+                <th>Plate Number</th>
                 <th>Access Level</th>
+                <th>Membership</th>
+                <th>Balance</th>
+                <th>Loyalty</th>
                 <th>Status</th>
-                <th>Created At</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -37,29 +39,41 @@ ob_start();
             <tr>
                 <td>
                     <div style="font-weight: 600; color: var(--text-main);"><?= htmlspecialchars($u['name']) ?></div>
+                    <div style="font-size: 11px; color: var(--text-muted);"><?= htmlspecialchars($u['email']) ?></div>
                 </td>
-                <td><?= htmlspecialchars($u['email']) ?></td>
+                <td class="mono" style="font-weight: 700;"><?= $u['plate_number'] ?: '—' ?></td>
                 <td>
-                    <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 4px 8px; border-radius: 4px; background: var(--primary-light); color: var(--primary);">
+                    <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: #f1f5f9; color: #475569;">
                         <?= $u['role'] ?>
                     </span>
                 </td>
                 <td>
+                    <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: <?= $u['membership_type'] === 'vip' ? 'var(--primary-light)' : '#f1f5f9' ?>; color: <?= $u['membership_type'] === 'vip' ? 'var(--primary)' : '#475569' ?>;">
+                        <?= $u['membership_type'] ?>
+                    </span>
+                </td>
+                <td style="font-weight: 600;"><?= peso($u['wallet_balance']) ?></td>
+                <td style="font-weight: 600; color: #f59e0b;">
+                    <div style="display:flex; align-items:center; gap:4px;">
+                        <i data-lucide="award" style="width:12px;"></i>
+                        <?= number_format($u['loyalty_points']) ?>
+                    </div>
+                </td>
+                <td>
                     <?php if ($u['is_active']): ?>
-                        <span style="color: var(--success); display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500;">
-                            <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--success);"></span> Active
+                        <span style="color: var(--success); display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500;">
+                            <span style="width: 5px; height: 5px; border-radius: 50%; background: var(--success);"></span> Active
                         </span>
                     <?php else: ?>
-                        <span style="color: var(--danger); display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500;">
-                            <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--danger);"></span> Inactive
+                        <span style="color: var(--danger); display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500;">
+                            <span style="width: 5px; height: 5px; border-radius: 50%; background: var(--danger);"></span> Inactive
                         </span>
                     <?php endif; ?>
                 </td>
-                <td><?= date('M d, Y', strtotime($u['created_at'])) ?></td>
                 <td>
-                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; font-weight: 700;" 
-                            onclick="openEditUser('<?= $u['id'] ?>', '<?= addslashes($u['name']) ?>', '<?= $u['email'] ?>', '<?= $u['role'] ?>')">
-                        <i data-lucide="edit-2" style="width:12px; margin-right:4px; vertical-align:middle;"></i> Edit
+                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px; font-weight: 700;" 
+                            onclick="openEditUser('<?= $u['id'] ?>', '<?= addslashes($u['name']) ?>', '<?= $u['email'] ?>', '<?= $u['role'] ?>', '<?= $u['plate_number'] ?>', '<?= $u['membership_type'] ?>', '<?= $u['wallet_balance'] ?>', '<?= $u['loyalty_points'] ?>')">
+                        Edit
                     </button>
                 </td>
             </tr>
@@ -82,23 +96,37 @@ ob_start();
         <form id="add-user-form">
             <div class="form-group">
                 <label class="label">Full Name</label>
-                <input type="text" class="input" placeholder="e.g. John Doe" required>
+                <input type="text" class="input" id="add-name" placeholder="e.g. John Doe" required>
             </div>
             <div class="form-group">
                 <label class="label">Email Address</label>
-                <input type="email" class="input" placeholder="john@parksys.com" required>
+                <input type="email" class="input" id="add-email" placeholder="john@parksys.com" required>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                 <div class="form-group">
                     <label class="label">Access Role</label>
-                    <select class="select" style="width: 100%;">
+                    <select class="select" id="add-role" style="width: 100%;">
+                        <option value="customer">Customer</option>
                         <option value="admin">Admin (Staff)</option>
                         <option value="superadmin">Superadmin</option>
                     </select>
                 </div>
                 <div class="form-group">
+                    <label class="label">Membership Type</label>
+                    <select class="select" id="add-membership" style="width: 100%;">
+                        <option value="standard">Standard</option>
+                        <option value="vip">VIP Member</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="label">Register Plate</label>
+                    <input type="text" class="input mono" id="add-plate" placeholder="ABC-1234">
+                </div>
+                <div class="form-group">
                     <label class="label">Temporary Password</label>
-                    <input type="password" class="input" placeholder="••••••••" required>
+                    <input type="password" class="input" id="add-password" placeholder="••••••••" required>
                 </div>
             </div>
             
@@ -131,12 +159,36 @@ ob_start();
                 <label class="label">Email Address</label>
                 <input type="email" class="input" id="edit-user-email" required>
             </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="label">Access Role</label>
+                    <select class="select" id="edit-user-role" style="width: 100%;">
+                        <option value="customer">Customer</option>
+                        <option value="admin">Admin (Staff)</option>
+                        <option value="superadmin">Superadmin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="label">Membership</label>
+                    <select class="select" id="edit-user-membership" style="width: 100%;">
+                        <option value="standard">Standard</option>
+                        <option value="vip">VIP Member</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label class="label">Plate Number</label>
+                    <input type="text" class="input mono" id="edit-user-plate" placeholder="ABC-1234">
+                </div>
+                <div class="form-group">
+                    <label class="label">Wallet Balance (₱)</label>
+                    <input type="number" step="0.01" class="input" id="edit-user-balance">
+                </div>
+            </div>
             <div class="form-group">
-                <label class="label">Access Role</label>
-                <select class="select" id="edit-user-role" style="width: 100%;">
-                    <option value="admin">Admin (Staff)</option>
-                    <option value="superadmin">Superadmin</option>
-                </select>
+                <label class="label">Loyalty Points</label>
+                <input type="number" class="input" id="edit-user-loyalty">
             </div>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px;">
@@ -149,11 +201,15 @@ ob_start();
 
 <script>
 function openAddUser() { document.getElementById('user-modal').classList.add('open'); }
-function openEditUser(id, name, email, role) {
+function openEditUser(id, name, email, role, plate, membership, balance, loyalty) {
     document.getElementById('edit-user-id').value = id;
     document.getElementById('edit-user-name').value = name;
     document.getElementById('edit-user-email').value = email;
     document.getElementById('edit-user-role').value = role;
+    document.getElementById('edit-user-plate').value = plate || '';
+    document.getElementById('edit-user-membership').value = membership;
+    document.getElementById('edit-user-balance').value = balance;
+    document.getElementById('edit-user-loyalty').value = loyalty || 0;
     document.getElementById('edit-user-modal').classList.add('open');
 }
 
@@ -161,6 +217,48 @@ function closeModal(e) {
     if (!e || e.target.classList.contains('modal-overlay')) {
         document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
     }
+}
+
+// Form Submissions
+document.getElementById('add-user-form').onsubmit = function(e) {
+    e.preventDefault();
+    const fd = new FormData();
+    fd.append('name', document.getElementById('add-name').value);
+    fd.append('email', document.getElementById('add-email').value);
+    fd.append('role', document.getElementById('add-role').value);
+    fd.append('membership', document.getElementById('add-membership').value);
+    fd.append('plate', document.getElementById('add-plate').value);
+    fd.append('password', document.getElementById('add-password').value);
+    
+    saveUser(fd);
+};
+
+document.getElementById('edit-user-form').onsubmit = function(e) {
+    e.preventDefault();
+    const fd = new FormData();
+    fd.append('id', document.getElementById('edit-user-id').value);
+    fd.append('name', document.getElementById('edit-user-name').value);
+    fd.append('email', document.getElementById('edit-user-email').value);
+    fd.append('role', document.getElementById('edit-user-role').value);
+    fd.append('membership', document.getElementById('edit-user-membership').value);
+    fd.append('plate', document.getElementById('edit-user-plate').value);
+    fd.append('balance', document.getElementById('edit-user-balance').value);
+    fd.append('loyalty', document.getElementById('edit-user-loyalty').value);
+    
+    saveUser(fd);
+};
+
+function saveUser(fd) {
+    fetch('<?= BASE_URL ?>/api/save_user.php', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                alert(res.message);
+                window.location.reload();
+            } else {
+                alert(res.message);
+            }
+        });
 }
 </script>
 

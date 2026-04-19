@@ -16,7 +16,9 @@ $kpis = $db->query("
         (SELECT SUM(total_fee) FROM transactions) as total_revenue,
         (SELECT COUNT(*) FROM transactions) as total_transactions,
         (SELECT COUNT(*) FROM sessions WHERE status = 'active') as current_occupancy,
-        (SELECT COUNT(*) FROM audit_logs WHERE action = 'SECURITY_BLOCK' OR action = 'EMERGENCY_OVERRIDE') as security_events
+        (SELECT COUNT(*) FROM audit_logs WHERE action = 'SECURITY_BLOCK' OR action = 'EMERGENCY_OVERRIDE') as security_events,
+        (SELECT COUNT(*) FROM users WHERE membership_type = 'vip') as total_vips,
+        (SELECT SUM(wallet_balance) FROM users) as wallet_pool
 ")->fetch(PDO::FETCH_ASSOC);
 
 // 2. Revenue Trend (Last 30 Days)
@@ -36,7 +38,23 @@ $vehicleDist = $db->query("
     GROUP BY s.vehicle_type
 ")->fetchAll(PDO::FETCH_ASSOC);
 
-// 4. Hourly Traffic (Peak Hours)
+// 4. Payment Distribution
+$paymentDist = $db->query("
+    SELECT payment_method, COUNT(*) as count, SUM(total_fee) as revenue
+    FROM transactions
+    GROUP BY payment_method
+")->fetchAll(PDO::FETCH_ASSOC);
+
+// 5. Membership Performance
+$membershipDist = $db->query("
+    SELECT COALESCE(u.membership_type, 'guest') as membership_type, COUNT(t.id) as transactions, SUM(t.total_fee) as revenue
+    FROM transactions t
+    JOIN sessions s ON t.session_id = s.id
+    LEFT JOIN users u ON s.user_id = u.id
+    GROUP BY u.membership_type
+")->fetchAll(PDO::FETCH_ASSOC);
+
+// 6. Hourly Traffic (Peak Hours)
 $peakHours = $db->query("
     SELECT HOUR(entry_time) as hour, COUNT(*) as count
     FROM sessions
@@ -45,7 +63,7 @@ $peakHours = $db->query("
     ORDER BY hour ASC
 ")->fetchAll(PDO::FETCH_ASSOC);
 
-// 5. Zone Utilization
+// 7. Zone Utilization
 $zoneUsage = $db->query("
     SELECT z.name, COUNT(s.id) as total_slots, 
            (SELECT COUNT(*) FROM sessions sess JOIN slots sl ON sess.slot_id = sl.id WHERE sl.zone_id = z.id AND sess.status = 'active') as occupied_slots
@@ -59,6 +77,8 @@ echo json_encode([
     'kpis' => $kpis,
     'revenueTrend' => $revenueTrend,
     'vehicleDist' => $vehicleDist,
+    'paymentDist' => $paymentDist,
+    'membershipDist' => $membershipDist,
     'peakHours' => $peakHours,
     'zoneUsage' => $zoneUsage
 ]);

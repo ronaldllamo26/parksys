@@ -115,7 +115,7 @@ ob_start();
                     </td>
                     <td><span class="mono" style="font-size: 11px; font-weight: 600; color: #64748b;"><?= $l['ip_address'] ?></span></td>
                     <td>
-                        <div style="font-size: 11px; color: var(--text-muted); max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: #f8fafc; padding: 4px 8px; border-radius: 4px; border: 1px solid #e2e8f0;" title='<?= htmlspecialchars($l['details']) ?>'>
+                        <div style="font-size: 11px; color: var(--text-muted); max-width: 250px; white-space: normal; word-break: break-all; background: #f8fafc; padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0; line-height: 1.4;" title='<?= htmlspecialchars($l['details']) ?>'>
                             <?= htmlspecialchars($l['details']) ?>
                         </div>
                     </td>

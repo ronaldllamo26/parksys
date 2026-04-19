@@ -1,58 +1,61 @@
-# 🚙 ParkSys Pro Enterprise v1.0.2
+# 🚗 ParkSys Pro — Smart Parking Management System
 
-**ParkSys Pro** is a high-performance, enterprise-grade Parking Management System designed for large-scale facilities like malls, corporate hubs, and smart cities. It features a modern, glassmorphism-inspired UI with advanced business intelligence and role-based operational workflows.
-
----
-
-## 💎 Key Features
-
-### 👑 Superadmin Suite (Business Intelligence)
-- **Live Revenue Analytics**: Real-time monitoring of daily/weekly collections via Chart.js.
-- **Occupancy Insights**: Doughnut charts showing vehicle distribution (Car vs Motorcycle vs Van).
-- **Audit Logs**: Comprehensive system-wide tracking of all user activities for maximum security.
-- **Dynamic Configuration**: Control rates, grace periods, and branding from a unified settings panel.
-
-### 🧤 Operations (Staff/Admin)
-- **AI-Assisted Entry**: Automated plate recognition (Simulation) and smart slot recommendation.
-- **Live Slot Monitor**: Visual grid of all parking zones with real-time occupancy status.
-- **Advanced Checkout**: Multi-method payment processing (Cash, GCash, Maya, Card).
-- **Digital Payment Simulation**: Professional QR-code based payment confirmation flow.
-- **Shift Reports**: Individual accountability with daily collection and handover summaries.
-
-### 📱 Customer Experience
-- **Public Bill Inquiry**: Mobile-responsive portal for customers to check their duration and estimated bill live.
-- **Official Receipts**: Thermal-optimized printable receipts (80mm) with full transaction breakdown.
+**ParkSys Pro** is a high-fidelity, enterprise-grade parking management solution designed to streamline vehicle entry, exit, billing, and facility intelligence. Built with a focus on speed, security, and a professional user experience.
 
 ---
 
-## 🛠️ Tech Stack
-- **Backend**: PHP 8.x (PDO)
-- **Database**: MySQL / MariaDB
-- **Frontend**: Vanilla CSS (Glassmorphism), JavaScript (Fetch API)
-- **Icons**: Lucide Icons
-- **Analytics**: Chart.js
+## 🌟 Core Features
+
+- **🚀 Live Dashboard**: Real-time monitoring of slot availability, active sessions, and system integrity.
+- **🛡️ Secure Authentication**: Role-based access control (RBAC) for Staff, Admin, and Superadmin tiers.
+- **💎 VIP & Loyalty System**: Dedicated VIP slot management and loyalty points integration for frequent parkers.
+- **📊 Advanced Analytics**: Comprehensive revenue tracking, peak-hour analysis, and occupancy trends.
+- **🧾 Automated Billing**: Smart calculation of fees based on vehicle type, duration, and VIP status with automated receipt generation.
+- **📜 Forensic Audit Logs**: High-detail system logs to track every administrative action and security event.
+- **✨ Professional UI**: A clean, modern, and responsive interface designed for high-pressure operational environments.
 
 ---
 
-## 🚀 Quick Installation
+## 🛠️ Technology Stack
 
-1. **Clone the repository**:
+- **Backend**: PHP 8.x (Standard Apache/XAMPP)
+- **Database**: MySQL (Optimized Relational Schema)
+- **Frontend**: Vanilla CSS3, Modern JavaScript (ES6+), Lucide Icons
+- **Design Principles**: Professional Minimalist, Enterprise Responsive Layout
+
+---
+
+## 🚀 Quick Setup
+
+1. **Clone the Repository**
    ```bash
    git clone https://github.com/ronaldllamo26/parksys.git
    ```
 
-2. **Database Setup**:
-   - Create a database named `parksys`.
-   - Import `parksys.sql` using phpMyAdmin or MySQL CLI.
+2. **Configure Database**
+   - Create a database named `parksys` in your MySQL server.
+   - Import the database schema from the `/sql` or `/api/export_db.php` if available.
+   - Update `config/database.php` with your local credentials.
 
-3. **Configuration**:
-   - Rename `config/database.php.example` to `config/database.php`.
-   - Update your database credentials in `config/database.php`.
+3. **Deploy to Local Server**
+   - Move the project folder to your `htdocs` or equivalent web root.
+   - Access the system via `http://localhost/parksys`.
 
-4. **Accessing the App**:
-   - Serve via XAMPP/WAMP: `http://localhost/parksys`
+4. **Default Credentials**
+   - **Admin**: `admin@parksys.com` / `admin123`
+   - **Staff**: `staff@parksys.com` / `staff123`
 
 ---
 
-## 📜 License
-&copy; 2026 Smart Mobility Solutions. Developed for Enterprise-level Parking Operations.
+## 📂 Project Structure
+
+- `api/` — Backend logic, data processing, and AJAX endpoints.
+- `controllers/` — Business logic and role management.
+- `views/` — Application interfaces (Dashboard, Entry, Exit, etc.).
+- `assets/` — Modern UI assets, icons, and typography.
+- `config/` — Environment and database configurations.
+
+---
+
+Developed with ❤️ for Academic Excellence.
+**ParkSys Pro — Scaling Mobility Intelligence.**

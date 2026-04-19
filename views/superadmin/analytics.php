@@ -15,7 +15,8 @@ $initialData = $db->query("
         COALESCE((SELECT SUM(total_fee) FROM transactions), 0) as revenue,
         (SELECT COUNT(*) FROM transactions) as transactions,
         (SELECT COUNT(*) FROM sessions WHERE status = 'active') as occupancy,
-        (SELECT COUNT(*) FROM audit_logs WHERE action IN ('SECURITY_BLOCK', 'EMERGENCY_OVERRIDE')) as security
+        (SELECT COUNT(*) FROM users WHERE membership_type = 'vip') as vips,
+        COALESCE((SELECT SUM(wallet_balance) FROM users), 0) as wallet_pool
 ")->fetch(PDO::FETCH_ASSOC);
 
 $pageTitle = 'Intelligence Hub';
@@ -104,11 +105,21 @@ ob_start();
     <div class="card stat-card" style="border: 1px solid var(--border);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
             <div style="width: 32px; height: 32px; background: #fef2f2; color: #ef4444; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                <i data-lucide="shield-alert" style="width:16px;"></i>
+                <i data-lucide="award" style="width:16px;"></i>
             </div>
         </div>
-        <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Security Events</div>
-        <div style="font-size: 28px; font-weight: 900; color: var(--text-main); margin-top: 4px;" id="kpi-security"><?= $initialData['security'] ?></div>
+        <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Active VIPs</div>
+        <div style="font-size: 28px; font-weight: 900; color: var(--text-main); margin-top: 4px;" id="kpi-vips"><?= $initialData['vips'] ?></div>
+    </div>
+
+    <div class="card stat-card" style="border: 1px solid var(--border);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div style="width: 32px; height: 32px; background: #f0fdf4; color: #16a34a; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="wallet" style="width:16px;"></i>
+            </div>
+        </div>
+        <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Wallet Pool</div>
+        <div style="font-size: 28px; font-weight: 900; color: var(--text-main); margin-top: 4px;" id="kpi-pool"><?= peso($initialData['wallet_pool']) ?></div>
     </div>
 
     <!-- AI Forecast Card -->
@@ -132,7 +143,7 @@ ob_start();
 }
 </style>
 
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+<div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 24px;">
     <div class="card" style="padding: 24px; border: 1px solid var(--border);">
         <div style="font-weight: 800; font-size: 14px; margin-bottom: 24px; color: var(--text-main);">Revenue Trend (Last 30 Days)</div>
         <canvas id="revenueChart" style="max-height: 300px;"></canvas>
@@ -140,6 +151,10 @@ ob_start();
     <div class="card" style="padding: 24px; border: 1px solid var(--border);">
         <div style="font-weight: 800; font-size: 14px; margin-bottom: 24px; color: var(--text-main);">Vehicle Category Mix</div>
         <canvas id="vehicleMixChart"></canvas>
+    </div>
+    <div class="card" style="padding: 24px; border: 1px solid var(--border);">
+        <div style="font-weight: 800; font-size: 14px; margin-bottom: 24px; color: var(--text-main);">Payment Methods</div>
+        <canvas id="paymentMixChart"></canvas>
     </div>
 </div>
 
@@ -191,7 +206,14 @@ function initCharts() {
     charts.mix = new Chart(ctx2, {
         type: 'doughnut',
         data: { labels: ['Cars', 'Motorcycles', 'Vans'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#2563eb', '#6366f1', '#8b5cf6'], borderWidth: 0 }] },
-        options: { responsive: true, cutout: '75%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { weight: 'bold' } } } } }
+        options: { responsive: true, cutout: '75%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { size: 10, weight: 'bold' } } } } }
+    });
+
+    const ctxPayment = document.getElementById('paymentMixChart').getContext('2d');
+    charts.payment = new Chart(ctxPayment, {
+        type: 'doughnut',
+        data: { labels: ['Cash', 'Wallet', 'GCash', 'Maya', 'Card'], datasets: [{ data: [0, 0, 0, 0, 0], backgroundColor: ['#64748b', '#2563eb', '#3b82f6', '#06b6d4', '#475569'], borderWidth: 0 }] },
+        options: { responsive: true, cutout: '75%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { size: 10, weight: 'bold' } } } } }
     });
 
     const ctx3 = document.getElementById('peakHoursChart').getContext('2d');
@@ -211,7 +233,8 @@ function refreshAnalytics() {
                 document.getElementById('kpi-revenue').textContent = '₱' + parseFloat(data.kpis.total_revenue || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
                 document.getElementById('kpi-txns').textContent = data.kpis.total_transactions;
                 document.getElementById('kpi-occ').textContent = data.kpis.current_occupancy;
-                document.getElementById('kpi-security').textContent = data.kpis.security_events;
+                document.getElementById('kpi-vips').textContent = data.kpis.total_vips;
+                document.getElementById('kpi-pool').textContent = '₱' + parseFloat(data.kpis.wallet_pool || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
 
                 // Revenue Trend
                 charts.revenue.data.labels = data.revenueTrend.map(d => d.date);
@@ -224,6 +247,11 @@ function refreshAnalytics() {
                 const vanCount = data.vehicleDist.find(v => v.vehicle_type === 'van')?.count || 0;
                 charts.mix.data.datasets[0].data = [carCount, motoCount, vanCount];
                 charts.mix.update();
+
+                // Payment Mix
+                const getP = (m) => data.paymentDist.find(p => p.payment_method === m)?.count || 0;
+                charts.payment.data.datasets[0].data = [getP('cash'), getP('wallet'), getP('gcash'), getP('maya'), getP('card')];
+                charts.payment.update();
 
                 // Peak Hours
                 charts.peak.data.labels = data.peakHours.map(d => d.hour + ':00');
@@ -266,9 +294,14 @@ function generateAIReport(data) {
         let insights = [];
         const rev = data.kpis.total_revenue || 0;
         const occ = data.kpis.current_occupancy || 0;
+        const vips = data.kpis.total_vips || 0;
+        const pool = data.kpis.wallet_pool || 0;
         
         if (rev > 5000) insights.push("Financial velocity is HIGH. AI recommends expanding premium VIP zones.");
         else insights.push("Steady revenue stream detected. System is performing within expected baseline.");
+        
+        if (vips > 10) insights.push("VIP Adoption is GROWING. Consider implementing a loyalty rewards program.");
+        if (pool > 2000) insights.push(`Digital Wallet Liquidity is HEALTHY at ${'₱' + pool.toLocaleString()}. Cashless adoption is rising.`);
         
         if (occ > 0.8) insights.push("CRITICAL: Facility nearing saturation. AI suggests re-routing new entries to South Wing.");
         if (data.kpis.security_events > 0) insights.push("SECURITY ALERT: Anomalies detected in Gate Overrides. Reviewing logs...");

@@ -29,7 +29,7 @@ class SessionController {
      * @param  int    $adminId      ID of the staff processing this
      * @return array  ['success', 'reference_id', 'slot_code', 'entry_time', 'message']
      */
-    public function processEntry(int $slotId, string $plateNumber, string $vehicleType, int $adminId): array {
+    public function processEntry(int $slotId, string $plateNumber, string $vehicleType, int $adminId, ?int $userId = null): array {
         $plate = strtoupper(trim($plateNumber));
 
         // --- Validation ---
@@ -82,12 +82,13 @@ class SessionController {
 
             $insertSession = $this->db->prepare("
                 INSERT INTO sessions
-                    (reference_id, slot_id, plate_number, vehicle_type, entry_time, status, processed_by)
+                    (reference_id, user_id, slot_id, plate_number, vehicle_type, entry_time, status, processed_by)
                 VALUES
-                    (:ref, :slot, :plate, :vtype, :entry, 'active', :admin)
+                    (:ref, :uid, :slot, :plate, :vtype, :entry, 'active', :admin)
             ");
             $insertSession->execute([
                 ':ref'   => $refId,
+                ':uid'   => $userId,
                 ':slot'  => $slotId,
                 ':plate' => $plate,
                 ':vtype' => $vehicleType,
@@ -151,9 +152,11 @@ class SessionController {
 
         // --- Find active session ---
         $stmt = $this->db->prepare("
-            SELECT s.*, sl.slot_code, sl.slot_type, sl.id AS slot_db_id
+            SELECT s.*, sl.slot_code, sl.slot_type, sl.id AS slot_db_id,
+                   u.membership_type, u.wallet_balance
             FROM   sessions s
             JOIN   slots sl ON s.slot_id = sl.id
+            LEFT JOIN users u ON s.user_id = u.id
             WHERE  (s.reference_id = :ref OR s.plate_number = :plate)
               AND  s.status = 'active'
             LIMIT  1
@@ -169,8 +172,9 @@ class SessionController {
         $entryTime = new DateTime($session['entry_time']);
         $exitTime  = new DateTime();
 
+        $isVip = ($session['membership_type'] === 'vip');
         try {
-            $fee = $this->billing->calculateFee($session['vehicle_type'], $entryTime, $exitTime, $isDiscounted, $session['slot_type']);
+            $fee = $this->billing->calculateFee($session['vehicle_type'], $entryTime, $exitTime, $isDiscounted, $session['slot_type'], $isVip);
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
         }
@@ -180,6 +184,33 @@ class SessionController {
 
         try {
             $this->db->beginTransaction();
+
+            // --- Wallet Deduction Logic ---
+            if ($paymentMethod === 'wallet') {
+                if (!$session['user_id']) {
+                    throw new Exception("This vehicle is not linked to a user account. Wallet payment unavailable.");
+                }
+                if ($session['wallet_balance'] < $fee['total_fee']) {
+                    throw new Exception("Insufficient wallet balance. Current: ₱" . number_format($session['wallet_balance'], 2));
+                }
+
+                // Deduct from user wallet
+                $this->db->prepare("UPDATE users SET wallet_balance = wallet_balance - :fee WHERE id = :uid")
+                         ->execute([':fee' => $fee['total_fee'], ':uid' => $session['user_id']]);
+                
+                // --- Loyalty Points Award ---
+                $pointsEarned = floor($fee['total_fee'] / 100);
+                if ($isVip) $pointsEarned *= 2; // Double points for VIPs
+                
+                if ($pointsEarned > 0) {
+                    $this->db->prepare("UPDATE users SET loyalty_points = loyalty_points + :pts WHERE id = :uid")
+                             ->execute([':pts' => $pointsEarned, ':uid' => $session['user_id']]);
+                    
+                    auditLog($this->db, $adminId, 'LOYALTY_AWARD', 'users', $session['user_id'], ['points' => $pointsEarned, 'reason' => 'Wallet Payment Rewards']);
+                }
+                
+                auditLog($this->db, $adminId, 'WALLET_DEDUCTION', 'users', $session['user_id'], ['amount' => $fee['total_fee']]);
+            }
 
             // Update session → completed
             $this->db->prepare("

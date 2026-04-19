@@ -23,9 +23,9 @@ class BillingController {
      *
      * @throws Exception if no rate config found
      */
-    public function calculateFee(string $vehicleType, DateTime $entry, DateTime $exit, bool $isDiscounted = false, string $slotType = 'standard'): array {
+    public function calculateFee(string $vehicleType, DateTime $entry, DateTime $exit, bool $isDiscounted = false, string $slotType = 'standard', bool $isVip = false): array {
         // Fetch active rate
-        $targetType = ($slotType === 'vip') ? 'vip' : $vehicleType;
+        $targetType = ($slotType === 'vip' || $isVip) ? 'vip' : $vehicleType;
 
         $stmt = $this->db->prepare("
             SELECT * FROM rates
@@ -129,10 +129,10 @@ class BillingController {
      * Get estimated bill for a CURRENTLY active session (no exit yet).
      * Used by customer "Check My Bill" portal.
      */
-    public function estimateBill(string $vehicleType, string $entryTimeStr, string $slotType = 'standard'): array {
+    public function estimateBill(string $vehicleType, string $entryTimeStr, string $slotType = 'standard', bool $isVip = false): array {
         $entry = new DateTime($entryTimeStr);
         $now   = new DateTime();
-        return $this->calculateFee($vehicleType, $entry, $now, false, $slotType);
+        return $this->calculateFee($vehicleType, $entry, $now, false, $slotType, $isVip);
     }
 
     /**

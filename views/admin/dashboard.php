@@ -73,35 +73,48 @@ ob_start();
                         <i data-lucide="map-pin" style="width:14px; color: var(--primary);"></i>
                         <?= htmlspecialchars($zoneName) ?>
                     </h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 16px;">
-                        <?php foreach ($slots as $s): ?>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px;">
+                        <?php foreach ($slots as $s): 
+                            $isVip = ($s['slot_type'] === 'vip');
+                            $isOcc = ($s['status'] === 'occupied');
+                            $bgColor = '#fff';
+                            $borderColor = 'var(--border)';
+                            
+                            if ($isOcc) {
+                                $bgColor = $isVip ? '#f5f3ff' : '#f8fafc';
+                                $borderColor = $isVip ? '#a78bfa' : 'var(--primary)';
+                            } elseif ($isVip) {
+                                $borderColor = '#f59e0b';
+                                $bgColor = '#fffdf5';
+                            }
+                        ?>
                         <div class="card slot-card <?= $s['status'] ?>" 
                              onclick="<?= $s['status'] === 'available' ? "window.location.href='entry.php?slot={$s['id']}'" : "window.location.href='exit.php?plate={$s['plate_number']}'" ?>"
-                             style="padding: 20px 16px; min-height: 110px; cursor: pointer; border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; background: <?= $s['status'] === 'available' ? '#fff' : '#f8fafc' ?>;">
+                             style="padding: 12px; min-height: 90px; cursor: pointer; border: 2px solid <?= $borderColor ?>; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; background: <?= $bgColor ?>; transition: all 0.2s;">
                             
                             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                <div style="font-size: 10px; font-weight: 900; color: var(--text-muted);"><?= $s['slot_code'] ?></div>
+                                <div style="font-size: 9px; font-weight: 900; color: <?= $isVip ? '#d97706' : 'var(--text-muted)' ?>;"><?= $s['slot_code'] ?></div>
                                 <?php if($s['slot_type'] === 'handicap'): ?>
                                     <i data-lucide="accessibility" style="width:12px; color: var(--primary);"></i>
                                 <?php elseif($s['slot_type'] === 'motorcycle'): ?>
                                     <i data-lucide="bike" style="width:12px; color: #8b5cf6;"></i>
-                                <?php elseif($s['slot_type'] === 'vip'): ?>
-                                    <i data-lucide="star" style="width:12px; color: #f59e0b;"></i>
+                                <?php elseif($isVip): ?>
+                                    <i data-lucide="award" style="width:14px; color: #f59e0b; animation: pulse 2s infinite;"></i>
                                 <?php endif; ?>
                             </div>
                             
-                            <?php if($s['status'] === 'occupied'): ?>
-                                <div>
-                                    <div style="font-size: 15px; font-weight: 900; color: var(--text-main); font-family: var(--font-mono); margin-bottom: 4px;"><?= $s['plate_number'] ?></div>
-                                    <div style="font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Stay: <span class="stay-timer" data-start="<?= $s['entry_time'] ?>">--:--</span></div>
+                            <?php if($isOcc): ?>
+                                <div style="margin-top: 4px;">
+                                    <div style="font-size: 13px; font-weight: 900; color: var(--text-main); font-family: var(--font-mono); line-height: 1;"><?= $s['plate_number'] ?></div>
+                                    <div style="font-size: 8px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-top: 4px;"><span class="stay-timer" data-start="<?= $s['entry_time'] ?>">--:--</span></div>
                                 </div>
                             <?php else: ?>
                                 <div style="text-align: center; opacity: 0.1;">
-                                    <i data-lucide="parking-circle" style="width:24px; height:24px;"></i>
+                                    <i data-lucide="parking-circle" style="width:20px; height:20px;"></i>
                                 </div>
                             <?php endif; ?>
 
-                            <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: <?= $s['status'] === 'available' ? 'var(--success)' : 'var(--primary)' ?>; opacity: 0.6;"></div>
+                            <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background: <?= $s['status'] === 'available' ? 'var(--success)' : ($isVip ? '#a78bfa' : 'var(--primary)') ?>; opacity: 1;"></div>
                         </div>
                         <?php endforeach; ?>
                     </div>

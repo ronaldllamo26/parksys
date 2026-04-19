@@ -29,6 +29,14 @@ $output = "-- ParkSys Pro Database Backup\n";
 $output .= "-- Generated: " . date('Y-m-d H:i:s') . "\n\n";
 
 foreach ($tables as $table) {
+    // 1. Export Table Structure
+    $stmt = $db->query("SHOW CREATE TABLE $table");
+    $createTable = $stmt->fetch(PDO::FETCH_ASSOC);
+    $output .= "-- Table structure for: $table\n";
+    $output .= "DROP TABLE IF EXISTS $table;\n";
+    $output .= $createTable['Create Table'] . ";\n\n";
+
+    // 2. Export Table Data
     $rows = $db->query("SELECT * FROM $table")->fetchAll(PDO::FETCH_ASSOC);
     $output .= "-- Dumping data for table: $table\n";
     foreach ($rows as $row) {
@@ -39,7 +47,7 @@ foreach ($tables as $table) {
         
         $output .= "INSERT INTO $table (" . implode(', ', $keys) . ") VALUES (" . implode(', ', $values) . ");\n";
     }
-    $output .= "\n";
+    $output .= "\n-- --------------------------------------------------------\n\n";
 }
 
 header('Content-Type: application/sql');

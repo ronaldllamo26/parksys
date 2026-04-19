@@ -100,6 +100,8 @@ ob_start();
 </div>
 
 <script>
+let detectedUserId = null;
+
 function validatePlate() {
     const plate = document.getElementById('plate').value;
     const type = document.getElementById('vtype').value;
@@ -117,7 +119,22 @@ function validatePlate() {
                 feedback.style.borderColor = res.color;
                 feedback.style.background = res.color + '10'; // 10% opacity
                 
-                aitext.innerHTML = `<strong style="color:${res.color}">[RISK: ${res.risk_level}]</strong> ${res.insights}`;
+                let insightHtml = `<strong style="color:${res.color}">[${res.risk_level}]</strong> ${res.insights}`;
+                
+                // VIP Info Enhancement
+                if (res.user) {
+                    detectedUserId = res.user.id;
+                    const bal = parseFloat(res.user.balance).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
+                    insightHtml += `<div style="margin-top:8px; padding-top:8px; border-top:1px solid ${res.color}30; font-size:12px;">
+                        <i data-lucide="award" style="width:14px; vertical-align:middle; margin-right:4px;"></i>
+                        <strong>${res.user.membership.toUpperCase()} Account:</strong> ${res.user.name} | 
+                        <strong>Balance:</strong> <span style="color:${res.user.balance < 200 ? 'var(--danger)' : 'inherit'}">${bal}</span>
+                    </div>`;
+                } else {
+                    detectedUserId = null;
+                }
+
+                aitext.innerHTML = insightHtml;
                 
                 // Disable button if CRITICAL or HIGH risk
                 const submitBtn = document.getElementById('submit-btn');
@@ -135,7 +152,9 @@ function validatePlate() {
                 if (res.recommendation && res.risk_level !== 'HIGH' && res.risk_level !== 'CRITICAL') {
                     slotSelect.value = res.recommendation.id;
                     const opt = slotSelect.querySelector(`option[value="${res.recommendation.id}"]`);
-                    if (opt) opt.textContent = `${res.recommendation.label} (Recommended)`;
+                    // Reset others first
+                    Array.from(slotSelect.options).forEach(o => o.textContent = o.textContent.replace(' (Recommended)', ''));
+                    if (opt) opt.textContent = `${opt.textContent} (Recommended)`;
                 }
                 if(typeof lucide !== 'undefined') lucide.createIcons();
             }
@@ -196,6 +215,9 @@ document.getElementById('entry-form').onsubmit = function(e) {
     fd.append('slot_id', document.getElementById('slot_id').value);
     fd.append('plate_number', document.getElementById('plate').value);
     fd.append('vehicle_type', document.getElementById('vtype').value);
+    if (detectedUserId) {
+        fd.append('user_id', detectedUserId);
+    }
     
     fetch('<?= BASE_URL ?>/api/process_entry.php', { method: 'POST', body: fd })
         .then(r => r.json())

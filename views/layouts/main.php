@@ -90,7 +90,7 @@
       <div class="user-name"><?= htmlspecialchars($_SESSION[SESSION_USER_NAME]) ?></div>
       <div class="user-role"><?= ucfirst($_SESSION[SESSION_USER_ROLE]) ?></div>
     </div>
-    <button onclick="showShiftSummary()" title="Close Shift & Sign Out" style="background:none; border:none; color:var(--danger); margin-left:auto; display:flex; cursor:pointer; padding:4px;">
+    <button onclick="<?= $_SESSION[SESSION_USER_ROLE] === ROLE_SUPERADMIN ? "location.href='" . BASE_URL . "/api/auth_logout.php'" : "showShiftSummary()" ?>" title="Sign Out" style="background:none; border:none; color:var(--danger); margin-left:auto; display:flex; cursor:pointer; padding:4px;">
       <i data-lucide="power" style="width:18px"></i>
     </button>
   </div>

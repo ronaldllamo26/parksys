@@ -26,22 +26,28 @@ ob_start();
 </div>
 
 <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px;">
-    <?php foreach ($rates as $r): ?>
-    <div class="card" style="padding: 32px; position: relative; border: 1px solid var(--border); overflow: hidden;">
+    <?php foreach ($rates as $r): 
+        $isVipRate = ($r['vehicle_type'] === 'vip');
+    ?>
+    <div class="card" style="padding: 32px; position: relative; border: 1px solid <?= $isVipRate ? 'var(--primary)' : 'var(--border)' ?>; overflow: hidden; <?= $isVipRate ? 'background: linear-gradient(135deg, #fff 0%, #f0f7ff 100%);' : '' ?>">
+        <?php if ($isVipRate): ?>
+            <div style="position: absolute; top: 12px; right: 12px; font-size: 8px; font-weight: 800; color: var(--primary); background: #fff; padding: 4px 10px; border-radius: 10px; border: 1px solid var(--primary); box-shadow: 0 2px 4px rgba(37,99,235,0.1);">SYSTEM LOCKED</div>
+        <?php endif; ?>
+
         <!-- Background Icon Accent -->
         <div style="position: absolute; top: -20px; right: -20px; opacity: 0.05; transform: rotate(-15deg);">
-            <i data-lucide="<?= $r['vehicle_type'] === 'car' ? 'car' : ($r['vehicle_type'] === 'motorcycle' ? 'bike' : 'truck') ?>" style="width: 140px; height: 140px;"></i>
+            <i data-lucide="<?= $r['vehicle_type'] === 'car' ? 'car' : ($r['vehicle_type'] === 'motorcycle' ? 'bike' : ($r['vehicle_type'] === 'vip' ? 'award' : 'truck')) ?>" style="width: 140px; height: 140px;"></i>
         </div>
 
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
-            <div style="width: 40px; height: 40px; background: var(--primary-light); color: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                <i data-lucide="<?= $r['vehicle_type'] === 'car' ? 'car' : ($r['vehicle_type'] === 'motorcycle' ? 'bike' : 'truck') ?>" style="width: 20px;"></i>
+            <div style="width: 40px; height: 40px; background: <?= $isVipRate ? 'var(--primary)' : 'var(--primary-light)' ?>; color: <?= $isVipRate ? '#fff' : 'var(--primary)' ?>; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="<?= $r['vehicle_type'] === 'car' ? 'car' : ($r['vehicle_type'] === 'motorcycle' ? 'bike' : ($r['vehicle_type'] === 'vip' ? 'award' : 'truck')) ?>" style="width: 20px;"></i>
             </div>
             <div>
                 <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.1em;">
                     <?= htmlspecialchars($r['vehicle_type']) ?> Category
                 </div>
-                <div style="font-size: 13px; color: var(--text-muted); font-weight: 500;">Active Strategy</div>
+                <div style="font-size: 13px; color: var(--text-muted); font-weight: 500;"><?= $isVipRate ? 'System Constant' : 'Active Strategy' ?></div>
             </div>
         </div>
 
@@ -52,7 +58,7 @@ ob_start();
             </div>
         </div>
         
-        <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div style="background: <?= $isVipRate ? '#fff' : 'var(--bg)' ?>; border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div>
                 <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase;">Excess / Hr</div>
                 <div style="font-weight: 800; color: var(--text-main); font-size: 15px;"><?= peso($r['excess_hour_fee']) ?></div>
@@ -67,8 +73,8 @@ ob_start();
                     <div style="font-weight: 800; color: var(--primary);"><?= $r['flat_day_rate'] ? peso($r['flat_day_rate']) : 'No Limit' ?></div>
                 </div>
                 <div style="text-align: right;">
-                    <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Updated</div>
-                    <div style="font-weight: 600; font-size: 12px; color: var(--text-main);"><?= date('M d, Y', strtotime($r['effective_from'])) ?></div>
+                    <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Status</div>
+                    <div style="font-weight: 600; font-size: 12px; color: <?= $isVipRate ? 'var(--primary)' : 'var(--success)' ?>;"><?= $isVipRate ? 'PROTECTED' : 'LIVE' ?></div>
                 </div>
             </div>
         </div>

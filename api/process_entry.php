@@ -17,9 +17,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $slotId  = (int)   ($_POST['slot_id']      ?? 0);
 $plate   = clean(   $_POST['plate_number'] ?? '');
 $vtype   = clean(   $_POST['vehicle_type'] ?? '');
+$userId  = isset($_POST['user_id']) ? (int)$_POST['user_id'] : null;
 $adminId = (int) $_SESSION[SESSION_USER_ID];
 
 $ctrl   = new SessionController();
-$result = $ctrl->processEntry($slotId, $plate, $vtype, $adminId);
+$result = $ctrl->processEntry($slotId, $plate, $vtype, $adminId, $userId);
 
 echo json_encode($result);
